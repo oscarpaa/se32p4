@@ -1,0 +1,47 @@
+module se32p4_csr
+    import se32p4_pkg::*;
+(
+    input logic clk_i,
+    input logic rst_i,
+    input logic csr_write_e_i,
+    input logic [1:0] csr_oper_i,
+    input logic [11:0] csr_addr_i,
+    input logic [31:0] csr_read_dat_i,
+    output logic [31:0] csr_write_dat_o
+
+);
+    logic [31:0] MISA;
+    logic [31:0] MSTATUS;
+    
+    logic [31:0] CSR_I, CSR_O;
+    
+    always @(csr_addr_i) begin
+        case (csr_addr_i)
+            CSR_MSTATUS: CSR_O = MSTATUS;
+            CSR_MISA:    CSR_O = MISA;
+        endcase
+    end
+    
+    always_comb begin       
+        case (csr_oper_i)
+            CSROP_RW: CSR_I = csr_read_dat_i;
+            CSROP_RS: CSR_I = CSR_O | csr_read_dat_i;
+            CSROP_RC: CSR_I = CSR_O & (~csr_read_dat_i);
+        endcase
+    end
+    
+    always @(posedge clk_i, posedge rst_i) begin
+        if (rst_i == 1'b1) begin
+            MSTATUS <= 32'h0;
+            MISA    <= 32'h40000100;
+        end else if (csr_write_e_i == 1'b1) begin  
+            case (csr_addr_i)
+                CSR_MSTATUS: MSTATUS = CSR_I;
+                CSR_MISA:    MISA = CSR_I;
+            endcase
+        end
+    end
+    
+    assign csr_write_dat_o = CSR_O;
+    
+endmodule

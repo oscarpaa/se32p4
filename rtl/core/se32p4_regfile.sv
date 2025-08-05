@@ -7,27 +7,19 @@ module se32p4_regfile (
     output logic [31:0] read_dat1_o, read_dat2_o,
     input logic [31:0] write_dat3_i
 );
-
     logic [31:0] REGISTER_MEM [31:0];
     
     always_ff @(posedge clk_i, posedge rst_i) begin : write_to_reg
-        if (rst_i) begin
+        if (rst_i == 1'b1) begin
             for (int i = 0; i < 32; i++) begin
                 REGISTER_MEM[i] <= 32'b0;
             end
-        end else if (write_e_i) begin
+        end else if (write_e_i == 1'b1) begin
             if (write_addr3_i != 5'b0) REGISTER_MEM[write_addr3_i] <= write_dat3_i;
         end
     end
     
-    always_ff @(posedge clk_i, posedge rst_i) begin : read_from_reg
-        if (rst_i) begin
-            read_dat1_o <= 32'b0;
-            read_dat2_o <= 32'b0;
-        end else if (!write_e_i) begin
-            read_dat1_o <= (read_addr1_i != 5'b0) ? REGISTER_MEM[read_addr1_i] : 32'b0;
-            read_dat2_o <= (read_addr2_i != 5'b0) ? REGISTER_MEM[read_addr2_i] : 32'b0;
-        end
-    end
+    assign read_dat1_o = (read_addr1_i != 5'b0) ? REGISTER_MEM[read_addr1_i] : 32'b0;
+    assign read_dat2_o = (read_addr2_i != 5'b0) ? REGISTER_MEM[read_addr2_i] : 32'b0;
 
 endmodule
