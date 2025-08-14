@@ -4,7 +4,7 @@ module se32p4_csr
     input logic clk_i,
     input logic rst_i,
     input logic csr_write_e_i,
-    input logic [1:0] csr_oper_i,
+    input csrop_t csr_oper_i,
     input logic [11:0] csr_addr_i,
     input logic [31:0] csr_read_dat_i,
     output logic [31:0] csr_write_dat_o
@@ -15,29 +15,31 @@ module se32p4_csr
     
     logic [31:0] CSR_I, CSR_O;
     
-    always @(csr_addr_i) begin
-        case (csr_addr_i)
-            CSR_MSTATUS: CSR_O = MSTATUS;
-            CSR_MISA:    CSR_O = MISA;
+    always_comb begin
+        unique case (csr_addr_i)
+            CSR_MSTATUS: CSR_O <= MSTATUS;
+            CSR_MISA:    CSR_O <= MISA;
+            default:     CSR_O <= 32'b0;
         endcase
     end
     
     always_comb begin       
-        case (csr_oper_i)
-            CSROP_RW: CSR_I = csr_read_dat_i;
-            CSROP_RS: CSR_I = CSR_O | csr_read_dat_i;
-            CSROP_RC: CSR_I = CSR_O & (~csr_read_dat_i);
+        unique case (csr_oper_i)
+            CSROP_RW: CSR_I <= csr_read_dat_i;
+            CSROP_RS: CSR_I <= CSR_O | csr_read_dat_i;
+            CSROP_RC: CSR_I <= CSR_O & (~csr_read_dat_i);
+            default:  CSR_I <= 32'b0;
         endcase
     end
     
-    always @(posedge clk_i, posedge rst_i) begin
+    always_ff @(posedge clk_i, posedge rst_i) begin
         if (rst_i == 1'b1) begin
             MSTATUS <= 32'h0;
             MISA    <= 32'h40000100;
         end else if (csr_write_e_i == 1'b1) begin  
             case (csr_addr_i)
-                CSR_MSTATUS: MSTATUS = CSR_I;
-                CSR_MISA:    MISA = CSR_I;
+                CSR_MSTATUS: MSTATUS <= CSR_I;
+                CSR_MISA:    MISA    <= CSR_I;
             endcase
         end
     end

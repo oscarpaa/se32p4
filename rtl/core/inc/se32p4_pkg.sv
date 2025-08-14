@@ -1,23 +1,104 @@
 package se32p4_pkg;
+    // Operation codes RV32I
+    localparam logic [6:0] OP_ALUI  = 7'b0010011; // I-type - ALU operation with immediate
+    localparam logic [6:0] OP_ALUR  = 7'b0110011; // R-type - ALU operation with registers
+    localparam logic [6:0] OP_LUI   = 7'b0110111; // U-type - load upper immediate
+    localparam logic [6:0] OP_AUIPC = 7'b0010111; // U-type - add upper immediate to PC
+    
+    localparam logic [6:0] OP_LOAD  = 7'b0000011; // I-type - load
+    localparam logic [6:0] OP_STORE = 7'b0100011; // S-type - store
+    
+    localparam logic [6:0] OP_BRANCH = 7'b1100011; // B-type - branches
+    localparam logic [6:0] OP_JALR   = 7'b1100111; // I-type - jump and link with register
+    localparam logic [6:0] OP_JAL    = 7'b1101111; // J-type - jump and link
+    
+    // funct3 RV32I
+    localparam logic [2:0] F3_BEQ  = 3'b000; // branch if equal
+    localparam logic [2:0] F3_BNE  = 3'b001; // branch if not equal
+    localparam logic [2:0] F3_BLT  = 3'b100; // branch if less than
+    localparam logic [2:0] F3_BGE  = 3'b101; // branch if greater than or equal
+    localparam logic [2:0] F3_BLTU = 3'b110; // branch if less than (unsigned)
+    localparam logic [2:0] F3_BGEU = 3'b111; // branch if greater than or equal (unsigned)
+    
+    localparam logic [2:0] F3_LB_SB  = 3'b000; // load / store byte
+    localparam logic [2:0] F3_LH_SH  = 3'b001; // load / store half word
+    localparam logic [2:0] F3_LW_SW  = 3'b010; // load / store word
+    localparam logic [2:0] F3_LBU  = 3'b100; // load byte (unsigned)
+    localparam logic [2:0] F3_LHU  = 3'b101; // load half word (unsigned)
+    
+    localparam logic [2:0] F3_SUB_ADD = 3'b000; // sub/add
+    localparam logic [2:0] F3_SLL  = 3'b001; // shift logical left
+    localparam logic [2:0] F3_SLT  = 3'b010; // set on less
+    localparam logic [2:0] F3_SLTU = 3'b011; // set on less unsigned
+    localparam logic [2:0] F3_XOR  = 3'b100; // xor
+    localparam logic [2:0] F3_SR   = 3'b101; // shift right
+    localparam logic [2:0] F3_OR   = 3'b110; // or
+    localparam logic [2:0] F3_AND  = 3'b111; // and
+
+    // Operation codes RV32C
+    typedef enum logic [3:0] {CNONE_T, CR_T, CI_T, CS_T, CSA_T, CB_T, CBA_T, CJ_T, CSS_T, CIW_T, CL_T} cformat_t;
+    
+    localparam logic [1:0] OPC_ZERO = 2'h0;
+    localparam logic [1:0] OPC_ONE  = 2'h1;
+    localparam logic [1:0] OPC_TWO  = 2'h2;
+
+    // funct3 RV32C
+    localparam logic [2:0] F3C_LW_LWSP = 3'b010;
+    localparam logic [2:0] F3C_SW_SWSP = 3'b110;
+ 
+    localparam logic [2:0] F3C_JAL = 3'b001;
+    localparam logic [2:0] F3C_J   = 3'b101;
+    
+    localparam logic [2:0] F3C_BEQZ = 3'b110;
+    localparam logic [2:0] F3C_BNEZ = 3'b111;
+    
+    localparam logic [2:0] F3C_ADDI         = 3'b000;
+    localparam logic [2:0] F3C_ADDI4SPN     = 3'b000;
+    localparam logic [2:0] F3C_ADDI16SP_LUI = 3'b011;
+    localparam logic [2:0] F3C_LI           = 3'b010;
+    
+    localparam logic [2:0] F3C_ALU = 3'b100;
+    localparam logic [1:0] FC_SRLI = 2'b00;
+    localparam logic [1:0] FC_SRAI = 2'b01;
+    localparam logic [1:0] FC_ANDI = 2'b10;
+    
+    localparam logic [2:0] F3C_SLLI   = 3'b000;
+    
+    localparam logic [5:0] F6C_CSA    = 6'b100011;
+    localparam logic [2:0] F6C_LO_CSA = 3'b011;    
+    
+    localparam logic [1:0] F2C_SUB     = 2'b00;
+    localparam logic [1:0] F2C_XOR     = 2'b01;
+    localparam logic [1:0] F2C_OR      = 2'b10;
+    localparam logic [1:0] F2C_AND     = 2'b11;
+    
+    localparam logic [3:0] F4C_JR_MV    = 4'b1000;
+    localparam logic [3:0] F4C_JALR_ADD = 4'b1001;
+    localparam logic [2:0] F4C_HI_CR    = 3'b100;
+
+    // PC SEL MODES
+    typedef enum logic [1:0] {SEL_PC_PLUS, SEL_PC_TARGET, SEL_JALR} sel_pc_t;
+    
     // ALU OPERATORS
-    localparam logic [3:0] ALUOP_ADD  = 4'h0;
-    localparam logic [3:0] ALUOP_SUB  = 4'h1;
-    localparam logic [3:0] ALUOP_AND  = 4'h2;
-    localparam logic [3:0] ALUOP_OR   = 4'h3;
-    localparam logic [3:0] ALUOP_XOR  = 4'h4;
-    localparam logic [3:0] ALUOP_SLT  = 4'h5;
-    localparam logic [3:0] ALUOP_SLTU = 4'h6;
-    localparam logic [3:0] ALUOP_SLL  = 4'h7;
-    localparam logic [3:0] ALUOP_SRL  = 4'h8;
-    localparam logic [3:0] ALUOP_SRA  = 4'h9;
+    typedef enum logic [3:0] {
+        ALUOP_NONE,
+        ALUOP_ADD,
+        ALUOP_SUB,
+        ALUOP_AND,
+        ALUOP_OR,
+        ALUOP_XOR,
+        ALUOP_SLT,
+        ALUOP_SLTU,
+        ALUOP_SLL,
+        ALUOP_SRL,
+        ALUOP_SRA
+    } aluop_t;
     
     // CSR ADDRESS
     localparam logic [11:0] CSR_MSTATUS = 12'h300;
     localparam logic [11:0] CSR_MISA = 12'h301;
     
     // CSR OPERATORS
-    localparam logic [1:0] CSROP_RW = 2'h0;
-    localparam logic [1:0] CSROP_RS = 2'h1;
-    localparam logic [1:0] CSROP_RC = 2'h2;
+    typedef enum logic [1:0] {CSROP_RW, CSROP_RS, CSROP_RC} csrop_t;
     
 endpackage
