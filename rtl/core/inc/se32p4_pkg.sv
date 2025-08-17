@@ -11,6 +11,8 @@ package se32p4_pkg;
     localparam logic [6:0] OP_BRANCH = 7'b1100011; // B-type - branches
     localparam logic [6:0] OP_JALR   = 7'b1100111; // I-type - jump and link with register
     localparam logic [6:0] OP_JAL    = 7'b1101111; // J-type - jump and link
+
+    localparam logic [6:0] OP_PRIVILEGED = 7'b1110011; // Privileged instructions
     
     // funct3 RV32I
     localparam logic [2:0] F3_BEQ  = 3'b000; // branch if equal
@@ -34,6 +36,14 @@ package se32p4_pkg;
     localparam logic [2:0] F3_SR   = 3'b101; // shift right
     localparam logic [2:0] F3_OR   = 3'b110; // or
     localparam logic [2:0] F3_AND  = 3'b111; // and
+
+    localparam logic [2:0] F3_CSRRW  = 3'b001;
+    localparam logic [2:0] F3_CSRRS  = 3'b010;
+    localparam logic [2:0] F3_CSRRC  = 3'b011;
+    localparam logic [2:0] F3_CSRRWI = 3'b101;
+    localparam logic [2:0] F3_CSRRSI = 3'b110;
+    localparam logic [2:0] F3_CSRRCI = 3'b111;
+
 
     // Operation codes RV32C
     typedef enum logic [3:0] {CNONE_T, CR_T, CI_T, CS_T, CSA_T, CB_T, CBA_T, CJ_T, CSS_T, CIW_T, CL_T} cformat_t;
@@ -76,8 +86,30 @@ package se32p4_pkg;
     localparam logic [3:0] F4C_JALR_ADD = 4'b1001;
     localparam logic [2:0] F4C_HI_CR    = 3'b100;
 
+    // MEMORY ENABLE
+    typedef struct packed {
+        logic read_e;
+        logic write_e;
+    } mem_rw_enable_t;
+
     // PC SEL MODES
     typedef enum logic [1:0] {SEL_PC_PLUS, SEL_PC_TARGET, SEL_JALR} sel_pc_t;
+
+    // BRANCH TYPES
+    typedef enum logic [2:0] {BRANCH_NONE, BRANCH_BEQ, BRANCH_BNE, BRANCH_BLT, BRANCH_BGE} branch_t;
+
+    // WRITE TO REGFILE SELECT
+    typedef enum logic [2:0] {
+        W_REG_NONE, 
+        W_REG_ALURES, 
+        W_REG_READ_DATA, 
+        W_REG_IMMEDIATE, 
+        W_REG_CSR, 
+        W_REG_PC_PLUS, 
+        W_REG_PC_TARGET
+    } sel_wreg_t;
+
+    typedef enum logic [1:0] {LSU_NONE, LSU_LOAD, LSU_STORE} sel_lsu_t; 
     
     // ALU OPERATORS
     typedef enum logic [3:0] {
@@ -99,6 +131,6 @@ package se32p4_pkg;
     localparam logic [11:0] CSR_MISA = 12'h301;
     
     // CSR OPERATORS
-    typedef enum logic [1:0] {CSROP_RW, CSROP_RS, CSROP_RC} csrop_t;
+    typedef enum logic [1:0] {CSROP_NONE, CSROP_RW, CSROP_RS, CSROP_RC} csrop_t;
     
 endpackage

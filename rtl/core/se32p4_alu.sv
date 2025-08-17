@@ -26,9 +26,9 @@ module se32p4_alu
             ALUOP_XOR:  oper_res_o <= oper_a_i ^ oper_b_i;
             ALUOP_SLT:  oper_res_o <= {31'b0, compare[1]};
             ALUOP_SLTU: oper_res_o <= {31'b0, compare[1]};
-            ALUOP_SLL:  oper_res_o <= oper_a_i << oper_b_i;
-            ALUOP_SRL:  oper_res_o <= oper_a_i >> oper_b_i;
-            ALUOP_SRA:  oper_res_o <= oper_a_i >>> oper_b_i;
+            ALUOP_SLL:  oper_res_o <= oper_a_i << oper_b_i[4:0];
+            ALUOP_SRL:  oper_res_o <= oper_a_i >> oper_b_i[4:0];
+            ALUOP_SRA:  oper_res_o <= oper_a_i >>> oper_b_i[4:0];
             default:    oper_res_o <= 32'b0;
         endcase
     end

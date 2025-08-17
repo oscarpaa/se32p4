@@ -1,5 +1,5 @@
 module se32p4_lsu (
-    input logic load_store_i,
+    input sel_lsu_t load_store_i,
     input logic sign_i,
     input logic [3:0] byte_e_i,
     input logic [31:0] dat_i,
@@ -7,7 +7,7 @@ module se32p4_lsu (
 );
 
     always_comb begin
-        if (load_store_i == 1'b0) begin : load_logic
+        if (load_store_i == LSU_LOAD) begin : load_logic
             unique case (byte_e_i)
                 4'b1000: 
                     if (sign_i == 1'b1) begin
@@ -50,7 +50,7 @@ module se32p4_lsu (
                 default: 
                     write_dat_o <= 32'b0;
             endcase
-        end else begin : store_logic
+        end else if (load_store_i == LSU_STORE) begin : store_logic
             unique case (byte_e_i)
                 4'b1000: write_dat_o <= {dat_i[7:0], 24'b0};
                 4'b0100: write_dat_o <= {8'b0, dat_i[7:0], 16'b0};
@@ -61,7 +61,8 @@ module se32p4_lsu (
                 4'b1111: write_dat_o <= dat_i;
                 default: write_dat_o <= 32'b0;
             endcase
-        end
+        end else 
+            write_dat_o <= 32'b0;
     end
 
 endmodule
