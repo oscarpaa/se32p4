@@ -88,9 +88,9 @@ package se32p4_pkg;
 
     // MEMORY ENABLE
     typedef struct packed {
-        logic read_e;
-        logic write_e;
-    } mem_rw_enable_t;
+        logic read_en;
+        logic write_en;
+    } mem_rw_en_t;
 
     // PC SEL MODES
     typedef enum logic [1:0] {SEL_PC_PLUS, SEL_PC_TARGET, SEL_JALR} sel_pc_t;

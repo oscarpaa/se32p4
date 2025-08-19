@@ -3,7 +3,7 @@ module se32p4_csr
 (
     input logic clk_i,
     input logic rst_i,
-    input logic csr_write_e_i,
+    input logic csr_write_en_i,
     input csrop_t csr_oper_i,
     input logic [11:0] csr_addr_i,
     input logic [31:0] csr_read_dat_i,
@@ -36,7 +36,7 @@ module se32p4_csr
         if (rst_i == 1'b1) begin
             MSTATUS <= 32'h0;
             MISA    <= 32'h40000100;
-        end else if (csr_write_e_i == 1'b1) begin  
+        end else if (csr_write_en_i == 1'b1) begin  
             case (csr_addr_i)
                 CSR_MSTATUS: MSTATUS <= CSR_I;
                 CSR_MISA:    MISA    <= CSR_I;

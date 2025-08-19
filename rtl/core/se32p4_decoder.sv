@@ -14,17 +14,17 @@ module se32p4_decoder
     output sel_pc_t is_jump_o,
     output branch_t is_branch_o,
     
-    output logic [4:0] read_addr1_o, read_addr2_o, write_addr3_o,
+    output logic [4:0] reg_read_addr1_o, reg_read_addr2_o, reg_write_addr3_o,
     
     output aluop_t alu_oper_o,
     output logic alu_sign_o,
     output logic lsu_sign_o,
     
     output csrop_t csr_oper_o,
-    output logic csr_write_e_o,
+    output logic csr_write_en_o,
     
-    output logic reg_write_e_o,
-    output mem_rw_enable_t mem_enable_o
+    output logic reg_write_en_o,
+    output mem_rw_en_t memory_en_o
 );
 
     logic [6:0] op_inst32 = instr_i[6:0];
@@ -165,118 +165,118 @@ module se32p4_decoder
         if (is_compressed == 1'b1) begin
             unique case (c_type)
                 CIW_T: begin
-                    read_addr1_o  <= 5'h2; // sp
-                    read_addr2_o  <= 5'h0;
-                    write_addr3_o <= {2'b01, instr_i[4:2]};
+                    reg_read_addr1_o  <= 5'h2; // sp
+                    reg_read_addr2_o  <= 5'h0;
+                    reg_write_addr3_o <= {2'b01, instr_i[4:2]};
                 end
                 CL_T: begin
-                    read_addr1_o  <= {2'b01, instr_i[9:7]}; 
-                    read_addr2_o  <= 5'h0;
-                    write_addr3_o <= {2'b01, instr_i[4:2]};
+                    reg_read_addr1_o  <= {2'b01, instr_i[9:7]}; 
+                    reg_read_addr2_o  <= 5'h0;
+                    reg_write_addr3_o <= {2'b01, instr_i[4:2]};
                 end
                 CS_T: begin
-                    read_addr1_o  <= {2'b01, instr_i[9:7]}; 
-                    read_addr2_o  <= {2'b01, instr_i[4:2]};
-                    write_addr3_o <= 5'h0;
+                    reg_read_addr1_o  <= {2'b01, instr_i[9:7]}; 
+                    reg_read_addr2_o  <= {2'b01, instr_i[4:2]};
+                    reg_write_addr3_o <= 5'h0;
                 end
                 CI_T: 
                     unique case (f3_inst16)
                         F3C_ADDI, F3C_SLLI: begin
-                            read_addr1_o  <= instr_i[11:7];
-                            read_addr2_o  <= 5'h0;
-                            write_addr3_o <= instr_i[11:7];
+                            reg_read_addr1_o  <= instr_i[11:7];
+                            reg_read_addr2_o  <= 5'h0;
+                            reg_write_addr3_o <= instr_i[11:7];
                         end
                         F3C_LI: begin
-                            read_addr1_o  <= 5'h0;
-                            read_addr2_o  <= 5'h0;
-                            write_addr3_o <= instr_i[11:7];
+                            reg_read_addr1_o  <= 5'h0;
+                            reg_read_addr2_o  <= 5'h0;
+                            reg_write_addr3_o <= instr_i[11:7];
                         end
                         F3C_ADDI16SP_LUI: 
                             if (instr_i[11:7] == 5'h2) begin : c_addi16sp
-                                read_addr1_o  <= 5'h2; // sp
-                                read_addr2_o  <= 5'h0;
-                                write_addr3_o <= 5'h2; // sp
+                                reg_read_addr1_o  <= 5'h2; // sp
+                                reg_read_addr2_o  <= 5'h0;
+                                reg_write_addr3_o <= 5'h2; // sp
                             end else begin : c_lui
-                                read_addr1_o  <= 5'h0;
-                                read_addr2_o  <= 5'h0;
-                                write_addr3_o <= instr_i[11:7];
+                                reg_read_addr1_o  <= 5'h0;
+                                reg_read_addr2_o  <= 5'h0;
+                                reg_write_addr3_o <= instr_i[11:7];
                             end
                         F3C_LW_LWSP: begin
-                            read_addr1_o  <= 5'h2; // sp
-                            read_addr2_o  <= 5'h0;
-                            write_addr3_o <= instr_i[11:7];
+                            reg_read_addr1_o  <= 5'h2; // sp
+                            reg_read_addr2_o  <= 5'h0;
+                            reg_write_addr3_o <= instr_i[11:7];
                         end
                         default: begin
-                            read_addr1_o  <= 5'h0;
-                            read_addr2_o  <= 5'h0;
-                            write_addr3_o <= 5'h0;
+                            reg_read_addr1_o  <= 5'h0;
+                            reg_read_addr2_o  <= 5'h0;
+                            reg_write_addr3_o <= 5'h0;
                         end
                     endcase
                 CJ_T:
                     unique case (f3_inst16)
                         F3C_JAL: begin
-                            read_addr1_o  <= 5'h0;
-                            read_addr2_o  <= 5'h0;
-                            write_addr3_o <= 5'h1; // ra
+                            reg_read_addr1_o  <= 5'h0;
+                            reg_read_addr2_o  <= 5'h0;
+                            reg_write_addr3_o <= 5'h1; // ra
                         end
                         F3C_J: begin
-                            read_addr1_o  <= 5'h0;
-                            read_addr2_o  <= 5'h0;
-                            write_addr3_o <= 5'h0;
+                            reg_read_addr1_o  <= 5'h0;
+                            reg_read_addr2_o  <= 5'h0;
+                            reg_write_addr3_o <= 5'h0;
                         end
                     endcase
                 CBA_T: begin
-                    read_addr1_o  <= {2'b01, instr_i[9:7]};
-                    read_addr2_o  <= 5'h0;
-                    write_addr3_o <= {2'b01, instr_i[9:7]};
+                    reg_read_addr1_o  <= {2'b01, instr_i[9:7]};
+                    reg_read_addr2_o  <= 5'h0;
+                    reg_write_addr3_o <= {2'b01, instr_i[9:7]};
                 end
                 CSA_T: begin
-                    read_addr1_o  <= {2'b01, instr_i[9:7]};
-                    read_addr2_o  <= {2'b01, instr_i[4:2]};
-                    write_addr3_o <= {2'b01, instr_i[9:7]};
+                    reg_read_addr1_o  <= {2'b01, instr_i[9:7]};
+                    reg_read_addr2_o  <= {2'b01, instr_i[4:2]};
+                    reg_write_addr3_o <= {2'b01, instr_i[9:7]};
                 end
                 CB_T: begin
-                    read_addr1_o  <= {2'b01, instr_i[9:7]};
-                    read_addr2_o  <= 5'h0;
-                    write_addr3_o <= 5'h0;
+                    reg_read_addr1_o  <= {2'b01, instr_i[9:7]};
+                    reg_read_addr2_o  <= 5'h0;
+                    reg_write_addr3_o <= 5'h0;
                 end
                 CR_T:
                     if (instr_i[12] == 1'b0) begin
                         if (instr_i[6:2] == 5'h0) begin : c_jr
-                            read_addr1_o  <= instr_i[11:7];
-                            read_addr2_o  <= 5'h0;
-                            write_addr3_o <= 5'h0;
+                            reg_read_addr1_o  <= instr_i[11:7];
+                            reg_read_addr2_o  <= 5'h0;
+                            reg_write_addr3_o <= 5'h0;
                         end else begin : c_mv
-                            read_addr1_o  <= 5'h0;
-                            read_addr2_o  <= instr_i[6:2];
-                            write_addr3_o <= instr_i[11:7];
+                            reg_read_addr1_o  <= 5'h0;
+                            reg_read_addr2_o  <= instr_i[6:2];
+                            reg_write_addr3_o <= instr_i[11:7];
                         end
                     end else begin
                         if (instr_i[6:2] == 5'h0) begin : c_jalr
-                            read_addr1_o  <= instr_i[11:7];
-                            read_addr2_o  <= 5'h0;
-                            write_addr3_o <= 5'h1; // ra
+                            reg_read_addr1_o  <= instr_i[11:7];
+                            reg_read_addr2_o  <= 5'h0;
+                            reg_write_addr3_o <= 5'h1; // ra
                         end else begin : c_add
-                            read_addr1_o  <= instr_i[11:7];
-                            read_addr2_o  <= instr_i[6:2];
-                            write_addr3_o <= instr_i[11:7];
+                            reg_read_addr1_o  <= instr_i[11:7];
+                            reg_read_addr2_o  <= instr_i[6:2];
+                            reg_write_addr3_o <= instr_i[11:7];
                         end
                     end
                 CSS_T: begin
-                    read_addr1_o  <= 5'h2; // sp
-                    read_addr2_o  <= instr_i[6:2];
-                    write_addr3_o <= 5'h0;
+                    reg_read_addr1_o  <= 5'h2; // sp
+                    reg_read_addr2_o  <= instr_i[6:2];
+                    reg_write_addr3_o <= 5'h0;
                 end
                 default: begin
-                    read_addr1_o  <= 5'h0; 
-                    read_addr2_o  <= 5'h0;
-                    write_addr3_o <= 5'h0;
+                    reg_read_addr1_o  <= 5'h0; 
+                    reg_read_addr2_o  <= 5'h0;
+                    reg_write_addr3_o <= 5'h0;
                 end
             endcase
         end else begin
-            read_addr1_o  <= instr_i[19:15]; 
-            read_addr2_o  <= instr_i[24:20];
-            write_addr3_o <= instr_i[11:7];
+            reg_read_addr1_o  <= instr_i[19:15]; 
+            reg_read_addr2_o  <= instr_i[24:20];
+            reg_write_addr3_o <= instr_i[11:7];
         end
     end
     
@@ -459,7 +459,7 @@ module se32p4_decoder
     end
 
     assign sel_write_reg_o = sel_write_reg;
-    assign reg_write_e_o = (sel_write_reg == W_REG_NONE) ? 1'b0 : 1'b1;
+    assign reg_write_en_o = (sel_write_reg == W_REG_NONE) ? 1'b0 : 1'b1;
 
     always_comb begin : write_to_reg_select
         if (is_compressed == 1'b1) begin
@@ -511,39 +511,39 @@ module se32p4_decoder
         if (is_compressed == 1'b1) begin
             unique case (c_type)
                 CL_T: begin
-                    mem_enable_o      <= '{1'b1, 1'b0};
+                    memory_en_o      <= '{1'b1, 1'b0};
                     sel_load_store_o  <= LSU_LOAD;
                 end
                 CI_T: begin
                     if (f3_inst16 == F3C_LW_LWSP) begin
-                        mem_enable_o      <= '{1'b1, 1'b0};
+                        memory_en_o      <= '{1'b1, 1'b0};
                         sel_load_store_o  <= LSU_LOAD;
                     end else begin
-                        mem_enable_o      <= '{1'b0, 1'b0};
+                        memory_en_o      <= '{1'b0, 1'b0};
                         sel_load_store_o  <= LSU_NONE;
                     end
                 end
                 CS_T, CSS_T: begin
-                    mem_enable_o      <= '{1'b0, 1'b1};
+                    memory_en_o      <= '{1'b0, 1'b1};
                     sel_load_store_o  <= LSU_STORE;
                 end
                 default: begin
-                    mem_enable_o      <= '{1'b0, 1'b0};
+                    memory_en_o      <= '{1'b0, 1'b0};
                     sel_load_store_o  <= LSU_NONE;
                 end
             endcase
         end else begin
             unique case (op_inst32)
                 OP_LOAD: begin
-                    mem_enable_o      <= '{1'b1, 1'b0};
+                    memory_en_o      <= '{1'b1, 1'b0};
                     sel_load_store_o  <= LSU_LOAD;
                 end
                 OP_STORE: begin
-                    mem_enable_o      <= '{1'b0, 1'b1};
+                    memory_en_o      <= '{1'b0, 1'b1};
                     sel_load_store_o  <= LSU_STORE;
                 end
                 default: begin
-                    mem_enable_o      <= '{1'b0, 1'b0};
+                    memory_en_o      <= '{1'b0, 1'b0};
                     sel_load_store_o  <= LSU_NONE;
                 end
             endcase
@@ -551,7 +551,7 @@ module se32p4_decoder
     end
 
     assign csr_oper_o = csr_oper;
-    assign csr_write_e_o = (csr_oper == CSROP_NONE) ? 1'b0 : 1'b1;
+    assign csr_write_en_o = (csr_oper == CSROP_NONE) ? 1'b0 : 1'b1;
 
     always_comb begin : csr_operator_select
         if (op_inst32 == OP_PRIVILEGED)

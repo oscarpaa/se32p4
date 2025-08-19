@@ -2,7 +2,7 @@
 module se32p4_regfile (
     input logic clk_i,
     input logic rst_i,
-    input logic write_e_i,
+    input logic write_en_i,
     input logic [4:0] read_addr1_i, read_addr2_i, write_addr3_i,
     output logic [31:0] read_dat1_o, read_dat2_o,
     input logic [31:0] write_dat3_i
@@ -14,7 +14,7 @@ module se32p4_regfile (
             for (int i = 0; i < 32; i++) begin
                 REGISTER_MEM[i] <= 32'b0;
             end
-        end else if (write_e_i == 1'b1) begin
+        end else if (write_en_i == 1'b1) begin
             if (write_addr3_i != 5'b0) REGISTER_MEM[write_addr3_i] <= write_dat3_i;
         end
     end

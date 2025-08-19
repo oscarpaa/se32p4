@@ -22,7 +22,7 @@ module se32p4_core (
     se32p4_lsu u_lsu (
         .load_store_i(),
         .sign_i(),
-        .byte_e_i(),
+        .byte_en_i(),
         .dat_i,
         .write_dat_o()
     );
