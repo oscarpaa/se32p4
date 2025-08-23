@@ -1,5 +1,5 @@
 
-module sys_memory #(
+module memory #(
     parameter int MEM_BYTES_LEN = 4096
 ) (
     input logic clk_i,

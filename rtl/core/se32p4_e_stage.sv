@@ -2,18 +2,20 @@
 module se32p4_e_stage 
     import se32p4_pkg::*;
 (
+    input logic clk_i,
+    input logic rst_i,
+    
     input logic [31:0] pc_d_i,
     input logic [31:0] pc_plus_d_i,
 
     input logic [31:0] immediate_d_i,
     
     input sel_lsu_t sel_load_store_d_i,
-    input logic sel_pc_increment_2_4_d_i,
     input logic sel_alu_immed_oper_b_d_i,
-    input sel_wreg_t sel_write_reg_d_i,
+    input sel_wreg_t sel_reg_write_d_i,
 
     input sel_pc_t is_jump_d_i,
-    input branch_t is_branch_d_i
+    input branch_t is_branch_d_i,
 
     input aluop_t alu_oper_d_i,
     input logic alu_sign_d_i,
@@ -28,16 +30,19 @@ module se32p4_e_stage
     input logic [31:0] csr_write_dat_d_i,
     output logic [31:0] csr_write_dat_e_o,
 
+    output logic [31:0] immediate_e_o,
     output logic [31:0] alu_result_e_o,
+    output logic [31:0] reg_read_dat2_e_o,
+    output logic lsu_sign_e_o,
 
-    output logic sel_pc_increment_2_4_e_o,
+    output sel_lsu_t sel_load_store_e_o,
     output sel_pc_t pc_sel_e_o,
     
     output logic [31:0] pc_plus_e_o,
     output logic [31:0] pc_target_e_o,
     output logic [31:0] pc_jalr_e_o,
 
-    output sel_wreg_t sel_write_reg_e_o,
+    output sel_wreg_t sel_reg_write_e_o,
     output logic [4:0] reg_write_addr3_e_o,
 
     output logic reg_write_en_e_o,
@@ -45,8 +50,6 @@ module se32p4_e_stage
 );
 
     logic [31:0] immediate_e;
-
-    sel_lsu_t sel_load_store_e;
     logic sel_alu_immed_oper_b_e;
 
     aluop_t alu_oper_e;
@@ -63,14 +66,13 @@ module se32p4_e_stage
 
     logic [31:0] pc_e;
 
-    always_ff @(posedge clk_i, posedge rst_i) begin : f_d_stage
+    always_ff @(posedge clk_i, posedge rst_i) begin : d_e_stage
         if (rst_i == 1'b1) begin
             immediate_e <= 32'b0;
 
-            sel_load_store_e <= LSU_NONE,
-            sel_pc_increment_2_4_e_o <= 1'b0,
-            sel_alu_immed_oper_b_e <= 1'b0,
-            sel_write_reg_e_o <= W_REG_NONE,
+            sel_load_store_e_o <= LSU_NONE;
+            sel_alu_immed_oper_b_e <= 1'b0;
+            sel_reg_write_e_o <= W_REG_NONE;
 
             is_jump_e <= SEL_PC_PLUS;
             is_branch_e <= BRANCH_NONE;
@@ -79,6 +81,7 @@ module se32p4_e_stage
             
             alu_oper_e  <= ALUOP_NONE;
             alu_sign_e  <= 1'b0;
+            lsu_sign_e_o <= 1'b0;
             reg_read_dat1_e <= 32'b0;
             reg_read_dat2_e <= 32'b0;
             reg_write_addr3_e_o <= 5'b0;
@@ -90,10 +93,9 @@ module se32p4_e_stage
         end else begin
             immediate_e <= immediate_d_i;
 
-            sel_load_store_e <= sel_load_store_d_i,
-            sel_pc_increment_2_4_e_o <= sel_pc_increment_2_4_d_i,
-            sel_alu_immed_oper_b_e <= sel_alu_immed_oper_b_d_i,
-            sel_write_reg_e_o <= sel_write_reg_d_i,
+            sel_load_store_e_o <= sel_load_store_d_i;
+            sel_alu_immed_oper_b_e <= sel_alu_immed_oper_b_d_i;
+            sel_reg_write_e_o <= sel_reg_write_d_i;
 
             is_jump_e <= is_jump_d_i;
             is_branch_e <= is_branch_d_i;
@@ -102,6 +104,7 @@ module se32p4_e_stage
             
             alu_oper_e  <= alu_oper_d_i;
             alu_sign_e  <= alu_sign_d_i;
+            lsu_sign_e_o <= lsu_sign_d_i;
             reg_read_dat1_e <= reg_read_dat1_d_i;
             reg_read_dat2_e <= reg_read_dat2_d_i;
             reg_write_addr3_e_o <= reg_write_addr3_d_i;
@@ -113,6 +116,8 @@ module se32p4_e_stage
         end
     end
 
+    assign immediate_e_o = immediate_e;
+    assign reg_read_dat2_e_o = reg_read_dat2_e;
     assign alu_oper_b_e = (sel_alu_immed_oper_b_e == 1'b0) ? reg_read_dat2_e : immediate_e;
 
     se32p4_alu u_alu (

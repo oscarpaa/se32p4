@@ -15,12 +15,11 @@ module se32p4_d_stage
     output logic [31:0] immediate_d_o,
     
     output sel_lsu_t sel_load_store_d_o,
-    output logic sel_pc_increment_2_4_d_o,
     output logic sel_alu_immed_oper_b_d_o,
-    output sel_wreg_t sel_write_reg_d_o,
+    output sel_wreg_t sel_reg_write_d_o,
 
     output sel_pc_t is_jump_d_o,
-    output branch_t is_branch_d_o
+    output branch_t is_branch_d_o,
 
     output aluop_t alu_oper_d_o,
     output logic alu_sign_d_o,
@@ -39,6 +38,7 @@ module se32p4_d_stage
 );
 
     logic [31:0] immediate_d;
+    logic is_reg_shift_d;
     logic [4:0] read_addr1_d, read_addr2_d;
 
     logic [31:0] mem_instr_d;
@@ -48,7 +48,7 @@ module se32p4_d_stage
     logic sel_csr_read_dat1_addr_d;
     logic [31:0] csr_read_dat_d;
 
-    logic [31:0] read_dat1_d;
+    logic [31:0] read_dat1_d, read_dat2_d;
 
     always_ff @(posedge clk_i, posedge rst_i) begin : f_d_stage
         if (rst_i == 1'b1) begin
@@ -67,11 +67,11 @@ module se32p4_d_stage
     se32p4_decoder u_decoder (
         .instr_i(mem_instr_d),
         .immediate_o(immediate_d),
+        .is_reg_shift_o(is_reg_shift_d),
         .sel_load_store_o(sel_load_store_d_o),
-        .sel_pc_increment_2_4_o(sel_pc_increment_2_4_d_o),
         .sel_read_dat1_addr_o(sel_csr_read_dat1_addr_d),
         .sel_alu_immed_oper_b_o(sel_alu_immed_oper_b_d_o),
-        .sel_write_reg_o(sel_write_reg_d_o),
+        .sel_reg_write_o(sel_reg_write_d_o),
         .is_jump_o(is_jump_d_o),
         .is_branch_o(is_branch_d_o),
         .reg_read_addr1_o(reg_read_addr1_d), 
@@ -98,7 +98,8 @@ module se32p4_d_stage
         .csr_write_dat_o(csr_write_dat_d_o)
     );
 
-    assign read_dat1_d_o = read_dat1_d;
+    assign reg_read_dat1_d_o = read_dat1_d;
+    assign reg_read_dat2_d_o = (is_reg_shift_d == 1'b0) ? read_dat2_d : read_dat2_d[4:0];
 
     se32p4_regfile u_regfile (
         .clk_i,
@@ -108,7 +109,7 @@ module se32p4_d_stage
         .read_addr2_i(read_addr2_d),
         .write_addr3_i(write_addr3_w_i),
         .read_dat1_o(read_dat1_d),
-        .read_dat2_o(read_dat2_d_o),
+        .read_dat2_o(read_dat2_d),
         .write_dat3_i(write_dat3_w_i)
     );
 

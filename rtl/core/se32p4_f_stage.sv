@@ -1,15 +1,15 @@
 
 module se32p4_f_stage 
     import se32p4_pkg::*;
-(
+#(
+    parameter logic [31:0] BOOT_ADDRESS = 32'b0
+) (
     input logic clk_i,
     input logic rst_i,
 
-    input logic [31:0] boot_addr_i,
     input logic [31:0] mem_instr_i,
     output logic [31:0] mem_instr_f_o,
     
-    input logic sel_pc_increment_2_4_e_i,
     input sel_pc_t pc_sel_e_i,
     
     input logic [31:0] pc_target_e_i,
@@ -18,23 +18,29 @@ module se32p4_f_stage
     output logic [31:0] pc_f_o,
     output logic [31:0] pc_plus_f_o    
 );
+    logic is_compressed;
 
     logic [31:0] pc_f, pc_next_f, pc_plus_f;
     logic [31:0] mem_instr_f;
     
     always_ff @(posedge clk_i, posedge rst_i) begin
         if (rst_i == 1'b1)
-            pc <= boot_addr_i;
+            pc_f <= BOOT_ADDRESS;
         else
-            pc <= pc_next;
+            pc_f <= pc_next_f;
     end
 
-    assign pc_plus_f = (sel_pc_increment_2_4_e_i == 1'b1) ? pc_f + 2 : pc_f + 4;;
+    assign pc_plus_f = (is_compressed == 1'b1) ? pc_f + 2 : pc_f + 4;;
     assign pc_next_f = (pc_sel_e_i == SEL_PC_PLUS)   ? pc_plus_f :
                        (pc_sel_e_i == SEL_PC_TARGET) ? pc_target_e_i : pc_jalr_e_i;
 
     assign pc_f_o = pc_f;
     assign pc_plus_f_o = pc_plus_f;
-    assign mem_instr_f_o = mem_instr_i;
+
+    se32p4_c_decoder u_c_decoder (
+        .instr_i(mem_instr_i),
+        .instr_o(mem_instr_f_o),
+        .is_compressed_o(is_compressed)
+    );
 
 endmodule

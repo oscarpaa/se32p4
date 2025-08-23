@@ -1,12 +1,12 @@
 
-module sys_core (
+module core (
 
 );
     se32p4_core u_core (
     
     );
     
-    sys_memory u_mem (
+    memory u_mem (
     
     );
 
