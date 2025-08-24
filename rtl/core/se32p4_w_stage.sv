@@ -22,11 +22,14 @@ module se32p4_w_stage
 
     input logic reg_write_en_e_i,
     input mem_rw_en_t memory_en_e_i,
+    input load_store_t ls_type_e_i,
 
+	output logic reg_write_en_w_o,
 	output sel_lsu_t sel_load_store_w_o,
 	output logic [4:0] reg_write_addr3_w_o,
     output logic lsu_sign_w_o,
 
+	output mem_rw_en_t memory_en_w_o,
     output logic [31:0] mem_address_w_o,
     input  logic [31:0] mem_rdat_i,
     output logic [31:0] mem_wdat_w_o,
@@ -38,8 +41,7 @@ module se32p4_w_stage
 	logic [31:0] pc_plus_w;
 	logic [31:0] pc_target_w;
 	sel_wreg_t sel_reg_write_w;
-	logic reg_write_en_w;
-	mem_rw_en_t memory_en_w;
+	load_store_t ls_type_w;
 
 	always_ff @(posedge clk_i, posedge rst_i) begin : e_w_stage
 		if (rst_i == 1'b1) begin
@@ -51,10 +53,11 @@ module se32p4_w_stage
 			pc_target_w <= 32'b0;
 			sel_reg_write_w <= W_REG_NONE;
 			reg_write_addr3_w_o <= 5'b0;
-			reg_write_en_w <= 1'b0;
-			memory_en_w <= '{1'b0, 1'b0};
+			reg_write_en_w_o <= 1'b0;
+			memory_en_w_o <= '{1'b0, 1'b0};
 			sel_load_store_w_o <= LSU_NONE;
 			lsu_sign_w_o <= 1'b0;
+			ls_type_w <= LS_NONE;
 		end else begin
 			immediate_w <= immediate_e_i;
 			csr_write_dat_w <= csr_write_dat_e_i;
@@ -64,31 +67,34 @@ module se32p4_w_stage
 			pc_target_w <= pc_target_e_i;
 			sel_reg_write_w <= sel_reg_write_e_i;
 			reg_write_addr3_w_o <= reg_write_addr3_e_i;
-			reg_write_en_w <= reg_write_en_e_i;
-			memory_en_w <= memory_en_e_i;
+			reg_write_en_w_o <= reg_write_en_e_i;
+			memory_en_w_o <= memory_en_e_i;
 			sel_load_store_w_o <= sel_load_store_e_i;
 			lsu_sign_w_o <= lsu_sign_e_i;
+			ls_type_w <= ls_type_e_i;
 		end
 	end
 
 	assign mem_address_w_o = alu_result_w;
 
 	always_comb begin : memory_byte_enable
-		if (fun3_i == f3_lsb || fun3_i == f3_lbu) begin // sb / lb
-			unique case (alu_result_w[1:0])
-				2'b11:    mem_byte_en_w_o <= 4'b1000;
-				2'b10:    mem_byte_en_w_o <= 4'b0100;
-				2'b01:    mem_byte_en_w_o <= 4'b0010;
-				default:  mem_byte_en_w_o <= 4'b0001;
-			endcase
-		end else if (fun3_i == f3_lsh || fun3_i == f3_lhu) begin // sh / lh
-			if (alu_result_w[1] == 1'b1)
-				mem_byte_en_w_o <= 4'b1100;
-			else
-				mem_byte_en_w_o <= 4'b0011;
-		end else begin // sw / lw
-			mem_byte_en_w_o <= 4'b1111;
-		end
+		unique case (ls_type_w)
+			LB_SB:
+				unique case (alu_result_w[1:0])
+					2'b11:    mem_byte_en_w_o <= 4'b1000;
+					2'b10:    mem_byte_en_w_o <= 4'b0100;
+					2'b01:    mem_byte_en_w_o <= 4'b0010;
+					default:  mem_byte_en_w_o <= 4'b0001;
+				endcase
+			LH_SH:
+				if (alu_result_w[1] == 1'b1)
+					mem_byte_en_w_o <= 4'b1100;
+				else
+					mem_byte_en_w_o <= 4'b0011;
+			LW_SW:
+				mem_byte_en_w_o <= 4'b1111;
+			default: mem_byte_en_w_o <= 4'b0;
+		endcase
 	end
 
 

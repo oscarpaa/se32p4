@@ -87,6 +87,8 @@ package se32p4_pkg;
 		LSU_STORE
 	} sel_lsu_t;
 
+	typedef enum logic [1:0] {LS_NONE, LB_SB, LH_SH, LW_SW} load_store_t;
+
 	// ALU OPERATORS
 	typedef enum logic [3:0] {
 		ALUOP_NONE,

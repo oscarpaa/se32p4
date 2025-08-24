@@ -23,6 +23,7 @@ module se32p4_e_stage
 
     input logic reg_write_en_d_i,
     input mem_rw_en_t memory_en_d_i,
+    input load_store_t ls_type_d_i,
 
     input logic [31:0] reg_read_dat1_d_i, reg_read_dat2_d_i,
     input logic [4:0] reg_write_addr3_d_i,
@@ -46,7 +47,8 @@ module se32p4_e_stage
     output logic [4:0] reg_write_addr3_e_o,
 
     output logic reg_write_en_e_o,
-    output mem_rw_en_t memory_en_e_o
+    output mem_rw_en_t memory_en_e_o,
+    output load_store_t ls_type_e_o
 );
 
     logic [31:0] immediate_e;
@@ -87,6 +89,7 @@ module se32p4_e_stage
             reg_write_addr3_e_o <= 5'b0;
             reg_write_en_e_o <= 1'b0;
             memory_en_e_o <= '{1'b0, 1'b0};
+            ls_type_e_o <= LS_NONE;
 
             pc_e <= pc_d_i;
             pc_plus_e_o <= pc_plus_d_i;
@@ -110,6 +113,7 @@ module se32p4_e_stage
             reg_write_addr3_e_o <= reg_write_addr3_d_i;
             reg_write_en_e_o <= reg_write_en_d_i;
             memory_en_e_o <= memory_en_d_i;
+            ls_type_e_o <= ls_type_d_i;
 
             pc_e <= pc_d_i;
             pc_plus_e_o <= pc_plus_d_i;

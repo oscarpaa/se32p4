@@ -6,7 +6,6 @@ module se32p4_decoder
 
     output logic [31:0] immediate_o,
     
-    output logic is_reg_shift_o,
     output sel_lsu_t sel_load_store_o,
     output logic sel_read_dat1_addr_o,
     output logic sel_alu_immed_oper_b_o,
@@ -25,7 +24,8 @@ module se32p4_decoder
     output logic csr_write_en_o,
     
     output logic reg_write_en_o,
-    output mem_rw_en_t memory_en_o
+    output mem_rw_en_t memory_en_o,
+    output load_store_t ls_type_o
 );
 
     logic [6:0] op_inst32 = instr_i[6:0];
@@ -34,19 +34,11 @@ module se32p4_decoder
 
     csrop_t csr_oper;
     sel_wreg_t sel_reg_write;
-
-    assign is_reg_shift_o = ((op_inst32 == OP_ALUR) &&
-                            ((f3_inst32 == F3_SLL) ||
-                             (f3_inst32 == F3_SRL_SRA))) ? 1'b1 : 1'b0;
+    sel_lsu_t sel_load_store;
 
     always_comb begin : immediate_generator
         unique case (op_inst32)
-            OP_ALUI:
-                unique case (f3_inst32)
-                    F3_SLL, F3_SRL_SRA: immediate_o <= {27'b0, instr_i[24:20]};
-                    default:            immediate_o <= {{20{instr_i[31]}}, instr_i[31:20]};
-                endcase
-            OP_LOAD, OP_JALR, OP_PRIVILEGED: 
+            OP_ALUI, OP_LOAD, OP_JALR, OP_PRIVILEGED: 
                 immediate_o <= {{20{instr_i[31]}}, instr_i[31:20]};
             OP_STORE:
                 immediate_o <= {{20{instr_i[31]}}, instr_i[31:25], instr_i[11:7]};
@@ -151,19 +143,28 @@ module se32p4_decoder
         endcase
     end
 
+    assign sel_load_store_o = sel_load_store;
+    assign ls_type_o = (sel_load_store == LSU_NONE) ? LS_NONE : 
+                       (f3_inst32 == F3_LB_SB)      ? LB_SB   :
+                       (f3_inst32 == F3_LBU)        ? LB_SB   :
+                       (f3_inst32 == F3_LH_SH)      ? LH_SH   :
+                       (f3_inst32 == F3_LHU)        ? LH_SH   :
+                       (f3_inst32 == F3_LW_SW)      ? LW_SW   : LS_NONE;
+
+
     always_comb begin : memory_select
         unique case (op_inst32)
             OP_LOAD: begin
                 memory_en_o      <= '{1'b1, 1'b0};
-                sel_load_store_o  <= LSU_LOAD;
+                sel_load_store  <= LSU_LOAD;
             end
             OP_STORE: begin
                 memory_en_o      <= '{1'b0, 1'b1};
-                sel_load_store_o  <= LSU_STORE;
+                sel_load_store  <= LSU_STORE;
             end
             default: begin
                 memory_en_o      <= '{1'b0, 1'b0};
-                sel_load_store_o  <= LSU_NONE;
+                sel_load_store  <= LSU_NONE;
             end
         endcase
     end
