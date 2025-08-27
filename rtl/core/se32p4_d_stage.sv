@@ -3,7 +3,8 @@ module se32p4_d_stage
     import se32p4_pkg::*; 
 (
     input logic clk_i,
-    input logic rst_i,
+    input logic rstn_i,
+    input logic en_i,
 
     input logic [31:0] pc_f_i,
     input logic [31:0] pc_plus_f_i,
@@ -29,6 +30,7 @@ module se32p4_d_stage
     output mem_rw_en_t memory_en_d_o,
     output load_store_t ls_type_d_o,
 
+    output logic [4:0] reg_read_addr1_d_o, reg_read_addr2_d_o,
     output logic [31:0] reg_read_dat1_d_o, reg_read_dat2_d_o,
     output logic [4:0] reg_write_addr3_d_o,
 
@@ -51,12 +53,14 @@ module se32p4_d_stage
 
     logic [31:0] reg_read_dat1_d;
 
-    always_ff @(posedge clk_i, posedge rst_i) begin : f_d_stage
-        if (rst_i == 1'b1) begin
+    logic reg_write_en_w;
+
+    always_ff @(posedge clk_i, negedge rstn_i) begin : f_d_stage
+        if (rstn_i == 1'b0) begin
             pc_d_o      <= 32'b0;
             mem_instr_d <= 32'b0;
             pc_plus_d_o <= 32'b0;
-        end else begin
+        end else if (en_i == 1'b1) begin
             pc_d_o      <= pc_f_i;
             mem_instr_d <= mem_instr_f_i;
             pc_plus_d_o <= pc_plus_f_i; 
@@ -87,11 +91,11 @@ module se32p4_d_stage
         .ls_type_o(ls_type_d_o)
     );
 
-    assign csr_read_dat_d = (sel_csr_read_dat1_addr_d == 1'b0) ? {27'b0, read_addr1_d} : reg_read_dat1_d;
+    assign csr_read_dat_d = (sel_csr_read_dat1_addr_d == 1'b0) ? {27'b0, reg_read_addr1_d} : reg_read_dat1_d;
 
     se32p4_csr u_csr (
         .clk_i,
-        .rst_i,
+        .rstn_i,
         .csr_write_en_i(csr_write_en_d),
         .csr_oper_i(csr_oper_d),
         .csr_addr_i(immediate_d),
@@ -99,12 +103,17 @@ module se32p4_d_stage
         .csr_write_dat_o(csr_write_dat_d_o)
     );
 
+    assign reg_read_addr1_d_o = reg_read_addr1_d;
+    assign reg_read_addr2_d_o = reg_read_addr2_d;
+    
     assign reg_read_dat1_d_o = reg_read_dat1_d;
+
+    assign reg_write_en_w = reg_write_en_w_i & en_i;
 
     se32p4_regfile u_regfile (
         .clk_i,
-        .rst_i,
-        .write_en_i(reg_write_en_w_i),
+        .rstn_i,
+        .write_en_i(reg_write_en_w),
         .read_addr1_i(reg_read_addr1_d),
         .read_addr2_i(reg_read_addr2_d),
         .write_addr3_i(reg_write_addr3_w_i),

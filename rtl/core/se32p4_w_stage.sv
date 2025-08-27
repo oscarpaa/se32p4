@@ -3,7 +3,7 @@ module se32p4_w_stage
   import se32p4_pkg::*;
 (
     input logic clk_i,
-    input logic rst_i,
+    input logic rstn_i,
     
     input logic [31:0] immediate_e_i,
 
@@ -24,6 +24,7 @@ module se32p4_w_stage
     input mem_rw_en_t memory_en_e_i,
     input load_store_t ls_type_e_i,
 
+	output logic [31:0] alu_result_w_o,
 	output logic reg_write_en_w_o,
 	output sel_lsu_t sel_load_store_w_o,
 	output logic [4:0] reg_write_addr3_w_o,
@@ -43,8 +44,8 @@ module se32p4_w_stage
 	sel_wreg_t sel_reg_write_w;
 	load_store_t ls_type_w;
 
-	always_ff @(posedge clk_i, posedge rst_i) begin : e_w_stage
-		if (rst_i == 1'b1) begin
+	always_ff @(posedge clk_i, negedge rstn_i) begin : e_w_stage
+		if (rstn_i == 1'b0) begin
 			immediate_w <= 32'b0;
 			csr_write_dat_w <= 32'b0;
 			alu_result_w <= 32'b0;
@@ -75,6 +76,7 @@ module se32p4_w_stage
 		end
 	end
 
+	assign alu_result_w_o = alu_result_w;
 	assign mem_address_w_o = alu_result_w;
 
 	always_comb begin : memory_byte_enable
@@ -96,7 +98,6 @@ module se32p4_w_stage
 			default: mem_byte_en_w_o <= 4'b0;
 		endcase
 	end
-
 
 	always_comb begin : reg_write_select
 		unique case (sel_reg_write_w)

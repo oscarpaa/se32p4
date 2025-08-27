@@ -43,11 +43,16 @@ module se32p4_c_decoder
     localparam logic [3:0] F4C_JALR_ADD = 4'b1001;
     localparam logic [2:0] F4C_HI_CR    = 3'b100;
 
-    logic [1:0] op_inst16 = instr_i[1:0];
-    logic [2:0] f3_inst16 = instr_i[15:13];
-    logic [1:0] f2_inst16 = instr_i[6:5];
+    logic [1:0] op_inst16;
+    logic [2:0] f3_inst16;
+    logic [1:0] f2_inst16;
+
+    assign op_inst16 = instr_i[1:0];
+    assign f3_inst16 = instr_i[15:13];
+    assign f2_inst16 = instr_i[6:5];
 
     always_comb begin : convert_16_to_32_instructions
+        is_compressed_o <= 1'b1;
         unique case (op_inst16)
             2'b00:
                 unique case (f3_inst16)
@@ -272,7 +277,10 @@ module se32p4_c_decoder
                         end
                     default: instr_o <= 32'b0;
                 endcase 
-            default: instr_o <= instr_i;
+            default: begin
+                is_compressed_o <= 1'b0;
+                instr_o <= instr_i;
+            end
         endcase
     end
 

@@ -1,9 +1,10 @@
 
 module memory #(
+    parameter bit SIMULATION = 0,
     parameter int MEM_BYTES_LEN = 4096
 ) (
     input logic clk_i,
-    input logic rst_i,
+    input logic rstn_i,
     input logic [3:0] byte_en_i,
     input logic [31:0] read_addr1_i,
     input logic [31:0] write_addr2_i,
@@ -11,17 +12,31 @@ module memory #(
     input logic [31:0] write_dat_i,
     output logic [31:0] read_dat1_o,
     output logic [31:0] read_dat2_o
-
 );
     localparam int ADDR_WIDTH = $clog2(MEM_BYTES_LEN);
     localparam int MEM_HALF_WORDS_LEN = MEM_BYTES_LEN/2;
+    logic [ADDR_WIDTH-2:0] addr1, addr2;
     
-    logic [15:0] SYS_MEMORY [0:MEM_HALF_WORDS_LEN-1];
-    logic addr1 = read_addr1_i[ADDR_WIDTH-1:1];
-    logic addr2 = write_addr2_i[ADDR_WIDTH-1:1];
+    logic [15:0] SYS_MEMORY[0:MEM_HALF_WORDS_LEN-1];
+    logic mem_rstn;
     
-    always_ff @(posedge clk_i, posedge rst_i) begin : write_to_sys_mem
-        if (rst_i == 1'b1) begin
+    generate
+        if (SIMULATION) begin
+            assign mem_rstn = 1'b1; 
+            initial begin
+                $display("[+] Loading memory");
+                $readmemh("/home/oscar/vivadowork/se32p4/rtl/sim/code_and_data.mem", SYS_MEMORY);
+            end
+        end else begin
+            assign mem_rstn = rstn_i; 
+        end
+    endgenerate
+    
+    assign addr1 = read_addr1_i[ADDR_WIDTH-1:1];
+    assign addr2 = write_addr2_i[ADDR_WIDTH-1:1];
+    
+    always_ff @(posedge clk_i, negedge mem_rstn) begin : write_to_sys_mem
+        if (mem_rstn == 1'b0) begin
             for (int i = 0; i < MEM_HALF_WORDS_LEN; i++)
                 SYS_MEMORY[i] <= 16'b0;
                 
@@ -42,8 +57,8 @@ module memory #(
         end
     end
     
-    always_ff @(posedge clk_i, posedge rst_i) begin : read_from_sys_mem_a2
-        if (rst_i == 1'b1) read_dat2_o <= 32'b0;
+    always_ff @(posedge clk_i, negedge mem_rstn) begin : read_from_sys_mem_a2
+        if (mem_rstn == 1'b0) read_dat2_o <= 32'b0;
         else if (read_addr2_en_i == 1'b1) begin
             read_dat2_o[15:0] <= SYS_MEMORY[addr2];
             if ((addr2 + 1) <= (MEM_HALF_WORDS_LEN - 1))
@@ -53,8 +68,8 @@ module memory #(
         end
     end
     
-    always_ff @(posedge clk_i, posedge rst_i) begin : read_from_sys_mem_a1
-        if (rst_i == 1'b1) read_dat1_o <= 32'b0;
+    always_ff @(posedge clk_i, negedge mem_rstn) begin : read_from_sys_mem_a1
+        if (mem_rstn == 1'b0) read_dat1_o <= 32'b0;
         else if (read_addr1_en_i == 1'b1) begin
             read_dat1_o[15:0] <= SYS_MEMORY[addr1];
             if ((addr1 + 1) <= (MEM_HALF_WORDS_LEN - 1))

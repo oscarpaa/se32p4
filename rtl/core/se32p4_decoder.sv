@@ -28,9 +28,13 @@ module se32p4_decoder
     output load_store_t ls_type_o
 );
 
-    logic [6:0] op_inst32 = instr_i[6:0];
-    logic [6:0] f7_inst32 = instr_i[31:25];
-    logic [2:0] f3_inst32 = instr_i[14:12];
+    logic [6:0] op_inst32;
+    logic [6:0] f7_inst32;
+    logic [2:0] f3_inst32;
+
+    assign op_inst32 = instr_i[6:0];
+    assign f7_inst32 = instr_i[31:25];
+    assign f3_inst32 = instr_i[14:12];
 
     csrop_t csr_oper;
     sel_wreg_t sel_reg_write;

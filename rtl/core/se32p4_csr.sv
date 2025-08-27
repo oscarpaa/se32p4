@@ -2,7 +2,7 @@ module se32p4_csr
     import se32p4_pkg::*;
 (
     input logic clk_i,
-    input logic rst_i,
+    input logic rstn_i,
     input logic csr_write_en_i,
     input csrop_t csr_oper_i,
     input logic [11:0] csr_addr_i,
@@ -32,8 +32,8 @@ module se32p4_csr
         endcase
     end
     
-    always_ff @(posedge clk_i, posedge rst_i) begin
-        if (rst_i == 1'b1) begin
+    always_ff @(posedge clk_i, negedge rstn_i) begin
+        if (rstn_i == 1'b0) begin
             MSTATUS <= 32'h0;
             MISA    <= 32'h40000100;
         end else if (csr_write_en_i == 1'b1) begin  
