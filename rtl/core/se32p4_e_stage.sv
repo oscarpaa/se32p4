@@ -130,7 +130,7 @@ module se32p4_e_stage
     end
 
     assign immediate_e_o = immediate_e;
-    assign reg_read_dat2_e_o = reg_read_dat2_e;
+    assign reg_read_dat2_e_o = (forward_oper_b_e_i == 1'b1) ? forward_reg_write_dat3_w_i : reg_read_dat2_e;
 
     always_comb begin
         if (forward_oper_a_e_i == 1'b1)
