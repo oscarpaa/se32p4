@@ -11,19 +11,20 @@ module core #(
     logic [31:0] pc;
     logic [31:0] mem_address;
     logic [3:0] mem_byte_en;
+    logic mem_instr_read_en;
     logic mem_read_en;
     logic mem_write_en;
     logic [31:0] mem_write_dat;
     logic [31:0] mem_read_dat;
     logic [31:0] mem_read_instr;
 
-
     se32p4_core #(.BOOT_ADDRESS(BOOT_ADDRESS)) u_cpu (
         .clk_i,
         .rstn_i,
         .pc_o(pc),
-        .mem_address_o(mem_address),
+        .mem_dat_addr_o(mem_address),
         .mem_byte_en_o(mem_byte_en),
+        .mem_instr_read_en_o(mem_instr_read_en),
         .mem_read_en_o(mem_read_en),
         .mem_write_en_o(mem_write_en),
         .mem_write_dat_o(mem_write_dat),
@@ -40,7 +41,7 @@ module core #(
         .byte_en_i(mem_byte_en),
         .read_addr1_i(pc),
         .write_addr2_i(mem_address),
-        .read_addr1_en_i(1'b1), 
+        .read_addr1_en_i(mem_instr_read_en), 
         .read_addr2_en_i(mem_read_en), 
         .write_en_i(mem_write_en),
         .write_dat_i(mem_write_dat),

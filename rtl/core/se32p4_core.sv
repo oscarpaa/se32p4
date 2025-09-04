@@ -8,8 +8,9 @@ module se32p4_core
     input logic rstn_i,
 
     output logic [31:0] pc_o,
-    output logic [31:0] mem_address_o,
+    output logic [31:0] mem_dat_addr_o,
     output logic [3:0] mem_byte_en_o,
+    output logic mem_instr_read_en_o,
     output logic mem_read_en_o,
     output logic mem_write_en_o,
     output logic [31:0] mem_write_dat_o,
@@ -46,7 +47,7 @@ module se32p4_core
 
     logic [31:0] csr_write_dat_d, csr_write_dat_e;
 
-    logic [31:0] alu_result_e, alu_result_w;
+    logic [31:0] alu_result_e;
     sel_pc_t pc_sel_e;
     logic [31:0] pc_target_e;
     logic [31:0] pc_jalr_e;
@@ -66,16 +67,18 @@ module se32p4_core
         .reg_write_addr3_w_i(reg_write_addr3_w),
         .forward_oper_a_e_o(forward_oper_a_e),
         .forward_oper_b_e_o(forward_oper_b_e),
-        .sel_reg_write_i(sel_reg_write_w),
+        .sel_reg_write_w_i(sel_reg_write_w),
         .load_en_o(load_en)
     );
+
+    assign mem_instr_read_en_o = load_en;
 
     assign pc_o = pc_f;
     
     se32p4_f_stage #(.BOOT_ADDRESS(BOOT_ADDRESS)) u_f_stage (
         .clk_i,
         .rstn_i,
-        .en_i(load_en),
+        .load_en_i(load_en),
         .mem_instr_i(mem_read_instr_i),
         .mem_instr_f_o(mem_instr_f),
         .pc_sel_e_i(pc_sel_e),
@@ -88,7 +91,7 @@ module se32p4_core
     se32p4_d_stage u_d_stage (
         .clk_i,
         .rstn_i,
-        .en_i(load_en),
+        .load_en_i(load_en),
         .pc_f_i(pc_f),
         .pc_plus_f_i(pc_plus_f),
         .mem_instr_f_i(mem_instr_f),
@@ -120,7 +123,7 @@ module se32p4_core
     se32p4_e_stage u_e_stage (
         .clk_i,
         .rstn_i,
-        .en_i(load_en),
+        .load_en_i(load_en),
         .pc_d_i(pc_d),
         .pc_plus_d_i(pc_plus_d),
         .immediate_d_i(immediate_d),
@@ -143,9 +146,9 @@ module se32p4_core
         .csr_write_dat_d_i(csr_write_dat_d),
         .csr_write_dat_e_o(csr_write_dat_e),
         .immediate_e_o(immediate_e),
-        .forward_alu_result_w_i(alu_result_w),
         .forward_oper_a_e_i(forward_oper_a_e),
         .forward_oper_b_e_i(forward_oper_b_e),
+        .forward_reg_write_dat3_w_i(reg_write_dat3_w),
         .alu_result_e_o(alu_result_e),
         .reg_read_dat2_e_o(reg_read_dat2_e),
         .lsu_sign_e_o(lsu_sign_e),
@@ -166,7 +169,7 @@ module se32p4_core
     se32p4_w_stage u_w_stage (
         .clk_i,
         .rstn_i,
-        .en_i(load_en),
+        .load_en_i(load_en),
         .immediate_e_i(immediate_e),
         .csr_write_dat_e_i(csr_write_dat_e),
         .alu_result_e_i(alu_result_e),
@@ -181,12 +184,11 @@ module se32p4_core
         .reg_write_en_e_i(reg_write_en_e),
         .memory_en_e_i(memory_en_e),
         .ls_type_e_i(ls_type_e),
-        .alu_result_w_o(alu_result_w),
         .reg_write_en_w_o(reg_write_en_w),
         .sel_reg_write_w_o(sel_reg_write_w),
         .reg_write_addr3_w_o(reg_write_addr3_w),
         .memory_en_w_o('{mem_read_en_o, mem_write_en_o}),
-        .mem_address_w_o(mem_address_o),
+        .mem_address_w_o(mem_dat_addr_o),
         .mem_rdat_i(mem_read_dat_i),
         .mem_byte_en_w_o(mem_byte_en_o),
         .mem_write_dat_o

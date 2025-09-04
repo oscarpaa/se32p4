@@ -6,7 +6,7 @@ module se32p4_f_stage
 ) (
     input logic clk_i,
     input logic rstn_i,
-    input logic en_i,
+    input logic load_en_i,
 
     input logic [31:0] mem_instr_i,
     output logic [31:0] mem_instr_f_o,
@@ -26,7 +26,7 @@ module se32p4_f_stage
     always_ff @(posedge clk_i, negedge rstn_i) begin
         if (rstn_i == 1'b0) begin
             pc_f <= BOOT_ADDRESS;
-        end else if (en_i == 1'b1) begin
+        end else if (load_en_i == 1'b1) begin
             pc_f <= pc_next_f;
         end
     end

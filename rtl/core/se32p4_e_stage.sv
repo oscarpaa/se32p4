@@ -4,7 +4,7 @@ module se32p4_e_stage
 (
     input logic clk_i,
     input logic rstn_i,
-    input logic en_i,
+    input logic load_en_i,
     
     input logic [31:0] pc_d_i,
     input logic [31:0] pc_plus_d_i,
@@ -34,8 +34,8 @@ module se32p4_e_stage
     output logic [31:0] csr_write_dat_e_o,
 
     output logic [31:0] immediate_e_o,
-    input logic [31:0] forward_alu_result_w_i,
     input logic forward_oper_a_e_i, forward_oper_b_e_i,
+    input logic [31:0] forward_reg_write_dat3_w_i,
     output logic [31:0] alu_result_e_o,
     output logic [31:0] reg_read_dat2_e_o,
     output logic lsu_sign_e_o,
@@ -100,7 +100,7 @@ module se32p4_e_stage
 
             pc_e <= 32'b0;
             pc_plus_e_o <= 32'b0;
-        end else if (en_i == 1'b1) begin
+        end else if (load_en_i == 1'b1) begin
             immediate_e <= immediate_d_i;
 
             sel_load_store_e_o <= sel_load_store_d_i;
@@ -132,10 +132,20 @@ module se32p4_e_stage
     assign immediate_e_o = immediate_e;
     assign reg_read_dat2_e_o = reg_read_dat2_e;
 
-    assign alu_oper_a_e = (forward_oper_a_e_i == 1'b1) ? forward_alu_result_w_i : reg_read_dat1_e;
+    always_comb begin
+        if (forward_oper_a_e_i == 1'b1)
+            alu_oper_a_e <= forward_reg_write_dat3_w_i;
+        else
+            alu_oper_a_e <= reg_read_dat1_e;
 
-    assign alu_oper_b_e = (forward_oper_b_e_i == 1'b1) ? forward_alu_result_w_i : 
-                          (sel_alu_immed_oper_b_e == 1'b0) ? reg_read_dat2_e  : immediate_e;
+        if (sel_alu_immed_oper_b_e == 1'b0)
+            if (forward_oper_b_e_i == 1'b1)
+                alu_oper_b_e <= forward_reg_write_dat3_w_i;
+            else
+                alu_oper_b_e <= reg_read_dat2_e;
+        else
+            alu_oper_b_e <= immediate_e;
+    end
 
     se32p4_alu u_alu (
         .oper_type_i(alu_oper_e),

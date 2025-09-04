@@ -4,7 +4,7 @@ module se32p4_d_stage
 (
     input logic clk_i,
     input logic rstn_i,
-    input logic en_i,
+    input logic load_en_i,
 
     input logic [31:0] pc_f_i,
     input logic [31:0] pc_plus_f_i,
@@ -60,7 +60,7 @@ module se32p4_d_stage
             pc_d_o      <= 32'b0;
             mem_instr_d <= 32'b0;
             pc_plus_d_o <= 32'b0;
-        end else if (en_i == 1'b1) begin
+        end else if (load_en_i == 1'b1) begin
             pc_d_o      <= pc_f_i;
             mem_instr_d <= mem_instr_f_i;
             pc_plus_d_o <= pc_plus_f_i; 
@@ -108,7 +108,7 @@ module se32p4_d_stage
     
     assign reg_read_dat1_d_o = reg_read_dat1_d;
 
-    assign reg_write_en_w = reg_write_en_w_i & en_i;
+    assign reg_write_en_w = reg_write_en_w_i & load_en_i;
 
     se32p4_regfile u_regfile (
         .clk_i,

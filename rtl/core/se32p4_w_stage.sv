@@ -4,7 +4,7 @@ module se32p4_w_stage
 (
     input logic clk_i,
     input logic rstn_i,
-    input logic en_i,
+    input logic load_en_i,
     
     input logic [31:0] immediate_e_i,
 
@@ -25,7 +25,6 @@ module se32p4_w_stage
     input mem_rw_en_t memory_en_e_i,
     input load_store_t ls_type_e_i,
 
-	output logic [31:0] alu_result_w_o,
 	output logic reg_write_en_w_o,
     output sel_wreg_t sel_reg_write_w_o,
 	output logic [4:0] reg_write_addr3_w_o,
@@ -69,7 +68,7 @@ module se32p4_w_stage
 			sel_load_store_w <= LSU_NONE;
 			lsu_sign_w <= 1'b0;
 			ls_type_w <= LS_NONE;
-		end else if (en_i == 1'b1) begin
+		end else if (load_en_i == 1'b1) begin
 			immediate_w <= immediate_e_i;
 			csr_write_dat_w <= csr_write_dat_e_i;
 			alu_result_w <= alu_result_e_i;
@@ -86,7 +85,6 @@ module se32p4_w_stage
 		end
 	end
 
-	assign alu_result_w_o = alu_result_w;
 	assign mem_address_w_o = alu_result_w;
 	assign sel_reg_write_w_o = sel_reg_write_w;
 
