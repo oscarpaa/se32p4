@@ -11,9 +11,7 @@ module se32p4_regfile (
     
     always_ff @(negedge clk_i, negedge rstn_i) begin : write_to_reg
         if (rstn_i == 1'b0) begin
-            for (int i = 0; i < 32; i++) begin
-                REGISTER_MEM[i] <= 32'b0;
-            end
+            REGISTER_MEM <= '{default: 32'b0};
         end else if (write_en_i == 1'b1) begin
             if (write_addr3_i != 5'b0) begin
                 REGISTER_MEM[write_addr3_i] <= write_dat3_i;

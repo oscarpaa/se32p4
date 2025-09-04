@@ -4,6 +4,7 @@ module se32p4_w_stage
 (
     input logic clk_i,
     input logic rstn_i,
+    input logic en_i,
     
     input logic [31:0] immediate_e_i,
 
@@ -26,14 +27,13 @@ module se32p4_w_stage
 
 	output logic [31:0] alu_result_w_o,
 	output logic reg_write_en_w_o,
-	output sel_lsu_t sel_load_store_w_o,
+    output sel_wreg_t sel_reg_write_w_o,
 	output logic [4:0] reg_write_addr3_w_o,
-    output logic lsu_sign_w_o,
 
 	output mem_rw_en_t memory_en_w_o,
     output logic [31:0] mem_address_w_o,
     input  logic [31:0] mem_rdat_i,
-    output logic [31:0] mem_wdat_w_o,
+    output logic [31:0] mem_write_dat_o,
 	output logic [3:0] mem_byte_en_w_o
 );
     logic [31:0] immediate_w;
@@ -42,67 +42,78 @@ module se32p4_w_stage
 	logic [31:0] pc_plus_w;
 	logic [31:0] pc_target_w;
 	sel_wreg_t sel_reg_write_w;
+    logic lsu_sign_w;
 	load_store_t ls_type_w;
+
+	logic [3:0] mem_byte_en_w;
+    logic [31:0] mem_read_dat;
+    logic [31:0] mem_wdat_w;
+
+	sel_lsu_t sel_load_store_w;
+
+    logic [31:0] lsu_unalign_dat;
+    logic [31:0] lsu_align_dat;
 
 	always_ff @(posedge clk_i, negedge rstn_i) begin : e_w_stage
 		if (rstn_i == 1'b0) begin
 			immediate_w <= 32'b0;
 			csr_write_dat_w <= 32'b0;
 			alu_result_w <= 32'b0;
-			mem_wdat_w_o <= 32'b0;
+			mem_wdat_w <= 32'b0;
 			pc_plus_w <= 32'b0;
 			pc_target_w <= 32'b0;
 			sel_reg_write_w <= W_REG_NONE;
 			reg_write_addr3_w_o <= 5'b0;
 			reg_write_en_w_o <= 1'b0;
 			memory_en_w_o <= '{1'b0, 1'b0};
-			sel_load_store_w_o <= LSU_NONE;
-			lsu_sign_w_o <= 1'b0;
+			sel_load_store_w <= LSU_NONE;
+			lsu_sign_w <= 1'b0;
 			ls_type_w <= LS_NONE;
-		end else begin
+		end else if (en_i == 1'b1) begin
 			immediate_w <= immediate_e_i;
 			csr_write_dat_w <= csr_write_dat_e_i;
 			alu_result_w <= alu_result_e_i;
-			mem_wdat_w_o <= reg_read_dat2_e_i;
+			mem_wdat_w <= reg_read_dat2_e_i;
 			pc_plus_w <= pc_plus_e_i;
 			pc_target_w <= pc_target_e_i;
 			sel_reg_write_w <= sel_reg_write_e_i;
 			reg_write_addr3_w_o <= reg_write_addr3_e_i;
 			reg_write_en_w_o <= reg_write_en_e_i;
 			memory_en_w_o <= memory_en_e_i;
-			sel_load_store_w_o <= sel_load_store_e_i;
-			lsu_sign_w_o <= lsu_sign_e_i;
+			sel_load_store_w <= sel_load_store_e_i;
+			lsu_sign_w <= lsu_sign_e_i;
 			ls_type_w <= ls_type_e_i;
 		end
 	end
 
 	assign alu_result_w_o = alu_result_w;
 	assign mem_address_w_o = alu_result_w;
+	assign sel_reg_write_w_o = sel_reg_write_w;
 
 	always_comb begin : memory_byte_enable
 		unique case (ls_type_w)
 			LB_SB:
 				unique case (alu_result_w[1:0])
-					2'b11:    mem_byte_en_w_o <= 4'b1000;
-					2'b10:    mem_byte_en_w_o <= 4'b0100;
-					2'b01:    mem_byte_en_w_o <= 4'b0010;
-					default:  mem_byte_en_w_o <= 4'b0001;
+					2'b11:    mem_byte_en_w <= 4'b1000;
+					2'b10:    mem_byte_en_w <= 4'b0100;
+					2'b01:    mem_byte_en_w <= 4'b0010;
+					default:  mem_byte_en_w <= 4'b0001;
 				endcase
 			LH_SH:
 				if (alu_result_w[1] == 1'b1)
-					mem_byte_en_w_o <= 4'b1100;
+					mem_byte_en_w <= 4'b1100;
 				else
-					mem_byte_en_w_o <= 4'b0011;
+					mem_byte_en_w <= 4'b0011;
 			LW_SW:
-				mem_byte_en_w_o <= 4'b1111;
-			default: mem_byte_en_w_o <= 4'b0;
+				mem_byte_en_w <= 4'b1111;
+			default: mem_byte_en_w <= 4'b0;
 		endcase
 	end
 
 	always_comb begin : reg_write_select
 		unique case (sel_reg_write_w)
 			W_REG_ALURES: reg_write_dat3_w_o <= alu_result_w;
-			W_REG_READ_DATA: reg_write_dat3_w_o <= mem_rdat_i;
+			W_REG_READ_DATA: reg_write_dat3_w_o <= mem_read_dat;
 			W_REG_IMMEDIATE: reg_write_dat3_w_o <= immediate_w;
 			W_REG_CSR: reg_write_dat3_w_o <= csr_write_dat_w;
 			W_REG_PC_PLUS: reg_write_dat3_w_o <= pc_plus_w;
@@ -110,5 +121,20 @@ module se32p4_w_stage
 			default: reg_write_dat3_w_o <= 32'b0;
 		endcase
 	end
+
+	assign mem_byte_en_w_o   = mem_byte_en_w;
+    assign mem_write_dat_o = (sel_load_store_w == LSU_STORE) ? lsu_align_dat : 32'b0;
+    assign mem_read_dat    = (sel_load_store_w == LSU_LOAD)  ? lsu_align_dat : 32'b0;
+
+    assign lsu_unalign_dat = (sel_load_store_w == LSU_STORE) ? mem_wdat_w :
+                             (sel_load_store_w == LSU_LOAD)  ? mem_rdat_i  : 32'b0;
+    
+    se32p4_lsu u_lsu (
+        .load_store_i(sel_load_store_w),
+        .sign_i(lsu_sign_w),
+        .byte_en_i(mem_byte_en_w),
+        .unalign_dat_i(lsu_unalign_dat),
+        .align_dat_o(lsu_align_dat)
+    );
 
 endmodule

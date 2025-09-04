@@ -2,7 +2,7 @@
 module se32p4_controller
     import se32p4_pkg::*;
 (
-    input logic clk_i, 
+    input logic clk_i,
     input logic rstn_i,
 
     input logic reg_write_en_w_i,
@@ -11,10 +11,34 @@ module se32p4_controller
     input logic [4:0] reg_write_addr3_w_i,
     output logic forward_oper_a_e_o, forward_oper_b_e_o,
 
-    input logic [31:0] alu_result_e_i, /* and range alu_result_e_i */
-    input sel_wreg_t sel_reg_write_e_i,
-    output logic load_active_o
+    input sel_wreg_t sel_reg_write_i,
+    output logic load_en_o
 );
+    logic load_active;
+    logic cur_load_state, nxt_load_state;
+
+    assign load_active = (sel_reg_write_i == W_REG_READ_DATA) ? 1'b1 : 1'b0;
+
+    always_ff @(posedge clk_i, negedge rstn_i) begin
+        if (rstn_i == 1'b0) begin
+            cur_load_state <= 1'b0;
+        end else begin
+            cur_load_state <= nxt_load_state;
+        end
+    end
+
+    always_comb begin
+        nxt_load_state <= cur_load_state;
+        load_en_o <= 1'b1;
+        if (cur_load_state == 1'b0) begin
+            if (load_active == 1'b1) begin
+                nxt_load_state <= 1'b1;
+                load_en_o <= 1'b0;
+            end
+        end else begin
+            nxt_load_state <= 1'b0;
+        end
+    end
     
     always_comb begin
         if (reg_write_en_w_i == 1'b1) begin
@@ -32,14 +56,4 @@ module se32p4_controller
             forward_oper_b_e_o <= 1'b0;
         end
     end
-
-    always_ff @(posedge clk_i, negedge rstn_i) begin
-        if (rstn_i == 1'b0) begin
-            load_active_o <= 1'b0;
-        end else begin  
-            load_active_o <= (sel_reg_write_e_i == W_REG_READ_DATA) ? 1'b1 : 1'b0; 
-        end
-
-    end
-
 endmodule

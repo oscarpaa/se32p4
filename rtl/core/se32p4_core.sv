@@ -26,14 +26,14 @@ module se32p4_core
 
     sel_lsu_t sel_load_store_d, sel_load_store_e;
     logic sel_alu_immed_oper_b_d;
-    sel_wreg_t sel_reg_write_d, sel_reg_write_e;
+    sel_wreg_t sel_reg_write_d, sel_reg_write_e, sel_reg_write_w;
 
     sel_pc_t is_jump_d;
     branch_t is_branch_d;
 
     aluop_t alu_oper_d;
     logic alu_sign_d;
-    logic lsu_sign_d, lsu_sign_e, lsu_sign_w;
+    logic lsu_sign_d, lsu_sign_e;
 
     logic reg_write_en_d, reg_write_en_e, reg_write_en_w;
     mem_rw_en_t memory_en_d, memory_en_e;
@@ -52,16 +52,10 @@ module se32p4_core
     logic [31:0] pc_jalr_e;
 
     logic [31:0] reg_write_dat3_w;
-	sel_lsu_t sel_load_store_w;
-	logic [3:0] mem_byte_en_w;
-
-    logic [31:0] mem_wdat_unlign;
-    logic [31:0] lsu_unalign_dat;
-    logic [31:0] lsu_align_dat;
 
     logic forward_oper_a_e, forward_oper_b_e;
 
-    logic load_active;
+    logic load_en;
 
     se32p4_controller u_controller (
         .clk_i,
@@ -72,10 +66,8 @@ module se32p4_core
         .reg_write_addr3_w_i(reg_write_addr3_w),
         .forward_oper_a_e_o(forward_oper_a_e),
         .forward_oper_b_e_o(forward_oper_b_e),
-
-        .sel_reg_write_e_i(sel_reg_write_e),
-        .alu_result_e_i(alu_result_e),
-        .load_active_o(load_active)
+        .sel_reg_write_i(sel_reg_write_w),
+        .load_en_o(load_en)
     );
 
     assign pc_o = pc_f;
@@ -83,7 +75,7 @@ module se32p4_core
     se32p4_f_stage #(.BOOT_ADDRESS(BOOT_ADDRESS)) u_f_stage (
         .clk_i,
         .rstn_i,
-        .en_i(~load_active),
+        .en_i(load_en),
         .mem_instr_i(mem_read_instr_i),
         .mem_instr_f_o(mem_instr_f),
         .pc_sel_e_i(pc_sel_e),
@@ -96,7 +88,7 @@ module se32p4_core
     se32p4_d_stage u_d_stage (
         .clk_i,
         .rstn_i,
-        .en_i(~load_active),
+        .en_i(load_en),
         .pc_f_i(pc_f),
         .pc_plus_f_i(pc_plus_f),
         .mem_instr_f_i(mem_instr_f),
@@ -128,7 +120,7 @@ module se32p4_core
     se32p4_e_stage u_e_stage (
         .clk_i,
         .rstn_i,
-        .en_i(~load_active),
+        .en_i(load_en),
         .pc_d_i(pc_d),
         .pc_plus_d_i(pc_plus_d),
         .immediate_d_i(immediate_d),
@@ -173,7 +165,8 @@ module se32p4_core
     
     se32p4_w_stage u_w_stage (
         .clk_i,
-        .rstn_i,   
+        .rstn_i,
+        .en_i(load_en),
         .immediate_e_i(immediate_e),
         .csr_write_dat_e_i(csr_write_dat_e),
         .alu_result_e_i(alu_result_e),
@@ -190,29 +183,13 @@ module se32p4_core
         .ls_type_e_i(ls_type_e),
         .alu_result_w_o(alu_result_w),
         .reg_write_en_w_o(reg_write_en_w),
-        .sel_load_store_w_o(sel_load_store_w),
+        .sel_reg_write_w_o(sel_reg_write_w),
         .reg_write_addr3_w_o(reg_write_addr3_w),
-        .lsu_sign_w_o(lsu_sign_w),
         .memory_en_w_o('{mem_read_en_o, mem_write_en_o}),
         .mem_address_w_o(mem_address_o),
-        .mem_rdat_i(mem_read_dat),
-        .mem_wdat_w_o(mem_wdat_unlign),
-        .mem_byte_en_w_o(mem_byte_en_w)
-    );
-
-    assign mem_byte_en_o   = mem_byte_en_w;
-    assign mem_write_dat_o = (sel_load_store_w == LSU_STORE) ? lsu_align_dat : 32'b0;
-    assign mem_read_dat    = (sel_load_store_w == LSU_LOAD)  ? lsu_align_dat : 32'b0;
-
-    assign lsu_unalign_dat = (sel_load_store_w == LSU_STORE) ? mem_wdat_unlign :
-                             (sel_load_store_w == LSU_LOAD)  ? mem_read_dat_i  : 32'b0;
-    
-    se32p4_lsu u_lsu (
-        .load_store_i(sel_load_store_w),
-        .sign_i(lsu_sign_w),
-        .byte_en_i(mem_byte_en_w),
-        .unalign_dat_i(lsu_unalign_dat),
-        .align_dat_o(lsu_align_dat)
+        .mem_rdat_i(mem_read_dat_i),
+        .mem_byte_en_w_o(mem_byte_en_o),
+        .mem_write_dat_o
     );
 
 endmodule
