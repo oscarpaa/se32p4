@@ -5,13 +5,16 @@ module se32p4_controller
     input logic clk_i,
     input logic rstn_i,
 
+    input sel_pc_t pc_sel_e_i,
+
     input logic reg_write_en_w_i,
     input logic [4:0] reg_read_addr1_e_i, 
     input logic [4:0] reg_read_addr2_e_i, 
     input logic [4:0] reg_write_addr3_w_i,
     output logic forward_oper_a_e_o, forward_oper_b_e_o,
     input sel_wreg_t sel_reg_write_w_i,
-    output logic load_en_o
+    output logic load_en_o,
+    output logic flush_o
 );
     logic cur_load_state, nxt_load_state;
 
@@ -19,6 +22,7 @@ module se32p4_controller
 
     assign mem_rdat_active = (sel_reg_write_w_i == W_REG_READ_DATA) ? 1'b1 : 1'b0;
 
+    assign flush_o = (pc_sel_e_i != SEL_PC_PLUS) ? 1'b1 : 1'b0; 
 
     always_ff @(posedge clk_i, negedge rstn_i) begin
         if (rstn_i == 1'b0) begin

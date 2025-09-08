@@ -25,6 +25,9 @@ module memory #(
             assign mem_rstn = 1'b1; 
             initial begin
                 $display("[+] Loading memory");
+                for (int i = 0; i < MEM_HALF_WORDS_LEN; i = i+1) begin
+                    SYS_MEMORY[i] = 16'h13; // nop
+                end
                 $readmemh("/home/oscar/vivadowork/se32p4/rtl/sim/chunks_code_n_data.mem", SYS_MEMORY);
             end
         end else begin

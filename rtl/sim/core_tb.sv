@@ -3,7 +3,7 @@
 module core_tb #(
     parameter bit SIMULATION = 1,
     parameter logic [31:0] BOOT_ADDRESS = 32'b0,
-    parameter int MEM_BYTES_LEN = 22
+    parameter int MEM_BYTES_LEN = 160
 );
     logic clk, rstn;
 

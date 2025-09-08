@@ -32,6 +32,7 @@ module se32p4_f_stage
     end
     
     assign pc_next_f = (rstn_i == 1'b0)              ? BOOT_ADDRESS  : 
+                       (load_en_i == 1'b0)           ? pc_f          :
                        (pc_sel_e_i == SEL_PC_PLUS)   ? pc_plus_f     :
                        (pc_sel_e_i == SEL_PC_TARGET) ? pc_target_e_i : pc_jalr_e_i;
 

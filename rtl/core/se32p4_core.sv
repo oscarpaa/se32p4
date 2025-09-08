@@ -56,11 +56,12 @@ module se32p4_core
 
     logic forward_oper_a_e, forward_oper_b_e;
 
-    logic load_en;
+    logic load_en, flush;
 
     se32p4_controller u_controller (
         .clk_i,
         .rstn_i,
+        .pc_sel_e_i(pc_sel_e),
         .reg_write_en_w_i(reg_write_en_w),
         .reg_read_addr1_e_i(reg_read_addr1_e), 
         .reg_read_addr2_e_i(reg_read_addr2_e), 
@@ -68,7 +69,8 @@ module se32p4_core
         .forward_oper_a_e_o(forward_oper_a_e),
         .forward_oper_b_e_o(forward_oper_b_e),
         .sel_reg_write_w_i(sel_reg_write_w),
-        .load_en_o(load_en)
+        .load_en_o(load_en),
+        .flush_o(flush)
     );
 
     assign mem_instr_read_en_o = load_en;
@@ -91,6 +93,7 @@ module se32p4_core
     se32p4_d_stage u_d_stage (
         .clk_i,
         .rstn_i,
+        .flush_i(flush),
         .load_en_i(load_en),
         .pc_f_i(pc_f),
         .pc_plus_f_i(pc_plus_f),
@@ -123,6 +126,7 @@ module se32p4_core
     se32p4_e_stage u_e_stage (
         .clk_i,
         .rstn_i,
+        .flush_i(flush),
         .load_en_i(load_en),
         .pc_d_i(pc_d),
         .pc_plus_d_i(pc_plus_d),
@@ -146,8 +150,8 @@ module se32p4_core
         .csr_write_dat_d_i(csr_write_dat_d),
         .csr_write_dat_e_o(csr_write_dat_e),
         .immediate_e_o(immediate_e),
-        .forward_oper_a_e_i(forward_oper_a_e),
-        .forward_oper_b_e_i(forward_oper_b_e),
+        .forward_oper_a_e_i(forward_oper_a_e & load_en),
+        .forward_oper_b_e_i(forward_oper_b_e & load_en),
         .forward_reg_write_dat3_w_i(reg_write_dat3_w),
         .alu_result_e_o(alu_result_e),
         .reg_read_dat2_e_o(reg_read_dat2_e),

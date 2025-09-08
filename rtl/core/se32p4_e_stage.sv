@@ -4,6 +4,7 @@ module se32p4_e_stage
 (
     input logic clk_i,
     input logic rstn_i,
+    input logic flush_i,
     input logic load_en_i,
     
     input logic [31:0] pc_d_i,
@@ -74,7 +75,7 @@ module se32p4_e_stage
     logic [31:0] pc_e;
 
     always_ff @(posedge clk_i, negedge rstn_i) begin : d_e_stage
-        if (rstn_i == 1'b0) begin
+        if (rstn_i == 1'b0 || flush_i == 1'b1) begin
             immediate_e <= 32'b0;
 
             sel_load_store_e_o <= LSU_NONE;
