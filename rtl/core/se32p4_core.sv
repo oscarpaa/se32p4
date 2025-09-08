@@ -46,12 +46,16 @@ module se32p4_core
     logic [4:0] reg_read_addr2_d, reg_read_addr2_e;
     logic [4:0] reg_write_addr3_d, reg_write_addr3_e, reg_write_addr3_w;
 
-    logic [31:0] csr_write_dat_d, csr_write_dat_e;
+    csrop_t csr_oper_d;
+    logic csr_write_en_d;
+    logic sel_csr_read_dat1_addr_d;
+
+    logic [31:0] csr_write_dat_e;
 
     logic [31:0] alu_result_e;
-    sel_pc_t pc_sel_e;
-    logic [31:0] pc_target_e;
-    logic [31:0] pc_jalr_e;
+    sel_pc_t pc_sel_e, pc_sel_w;
+    logic [31:0] pc_target_e, pc_target_w;
+    logic [31:0] pc_jalr_e, pc_jalr_w;
 
     logic [31:0] reg_write_dat3_w;
 
@@ -62,7 +66,7 @@ module se32p4_core
     se32p4_controller u_controller (
         .clk_i,
         .rstn_i,
-        .pc_sel_e_i(pc_sel_e),
+        .pc_sel_w_i(pc_sel_w),
         .reg_write_en_w_i(reg_write_en_w),
         .reg_read_addr1_e_i(reg_read_addr1_e), 
         .reg_read_addr2_e_i(reg_read_addr2_e), 
@@ -84,9 +88,9 @@ module se32p4_core
         .load_en_i(load_en),
         .mem_instr_i(mem_read_instr_i),
         .mem_instr_f_o(mem_instr_f),
-        .pc_sel_e_i(pc_sel_e),
-        .pc_target_e_i(pc_target_e),
-        .pc_jalr_e_i(pc_jalr_e),
+        .pc_sel_w_i(pc_sel_w),
+        .pc_target_w_i(pc_target_w),
+        .pc_jalr_w_i(pc_jalr_w),
         .pc_f_o(pc_f),
         .pc_plus_f_o(pc_plus_f),
         .pc_next_f_o(pc_next_f)
@@ -122,7 +126,9 @@ module se32p4_core
         .reg_write_en_w_i(reg_write_en_w),
         .reg_write_addr3_w_i(reg_write_addr3_w),
         .reg_write_dat3_w_i(reg_write_dat3_w),
-        .csr_write_dat_d_o(csr_write_dat_d)
+        .csr_oper_d_o(csr_oper_d),
+        .csr_write_en_d_o(csr_write_en_d),
+        .sel_csr_read_dat1_addr_d_o(sel_csr_read_dat1_addr_d)
     );
     
     se32p4_e_stage u_e_stage (
@@ -149,7 +155,9 @@ module se32p4_core
         .reg_read_dat1_d_i(reg_read_dat1_d), 
         .reg_read_dat2_d_i(reg_read_dat2_d),
         .reg_write_addr3_d_i(reg_write_addr3_d),
-        .csr_write_dat_d_i(csr_write_dat_d),
+        .csr_oper_d_i(csr_oper_d),
+        .csr_write_en_d_i(csr_write_en_d),
+        .sel_csr_read_dat1_addr_d_i(sel_csr_read_dat1_addr_d),
         .csr_write_dat_e_o(csr_write_dat_e),
         .immediate_e_o(immediate_e),
         .forward_oper_a_e_i(forward_oper_a_e & load_en),
@@ -175,18 +183,24 @@ module se32p4_core
     se32p4_w_stage u_w_stage (
         .clk_i,
         .rstn_i,
+        .flush_i(flush),
         .load_en_i(load_en),
         .immediate_e_i(immediate_e),
         .csr_write_dat_e_i(csr_write_dat_e),
         .alu_result_e_i(alu_result_e),
         .reg_read_dat2_e_i(reg_read_dat2_e),
         .lsu_sign_e_i(lsu_sign_e),
+        .pc_sel_e_i(pc_sel_e),
         .pc_plus_e_i(pc_plus_e),
         .pc_target_e_i(pc_target_e),
+        .pc_jalr_e_i(pc_jalr_e),
         .sel_load_store_e_i(sel_load_store_e),
         .sel_reg_write_e_i(sel_reg_write_e),
         .reg_write_addr3_e_i(reg_write_addr3_e),
         .reg_write_dat3_w_o(reg_write_dat3_w),
+        .pc_sel_w_o(pc_sel_w),
+        .pc_target_w_o(pc_target_w),
+        .pc_jalr_w_o(pc_jalr_w),
         .reg_write_en_e_i(reg_write_en_e),
         .memory_en_e_i(memory_en_e),
         .ls_type_e_i(ls_type_e),

@@ -31,7 +31,9 @@ module se32p4_e_stage
     input logic [31:0] reg_read_dat1_d_i, reg_read_dat2_d_i,
     input logic [4:0] reg_write_addr3_d_i,
 
-    input logic [31:0] csr_write_dat_d_i,
+    input csrop_t csr_oper_d_i,
+    input logic csr_write_en_d_i,
+    input logic sel_csr_read_dat1_addr_d_i,
     output logic [31:0] csr_write_dat_e_o,
 
     output logic [31:0] immediate_e_o,
@@ -73,9 +75,15 @@ module se32p4_e_stage
     logic [1:0] compare_e;
 
     logic [31:0] pc_e;
+    logic [4:0] reg_read_addr1_e;
+
+    logic [31:0] csr_read_dat_e;
+    csrop_t csr_oper_e;
+    logic csr_write_en_e;
+    logic sel_csr_read_dat1_addr_e;
 
     always_ff @(posedge clk_i, negedge rstn_i) begin : d_e_stage
-        if (rstn_i == 1'b0) begin
+        if (rstn_i == 1'b0 || flush_i == 1'b1) begin
             immediate_e <= 32'b0;
 
             sel_load_store_e_o <= LSU_NONE;
@@ -84,13 +92,11 @@ module se32p4_e_stage
 
             is_jump_e <= SEL_PC_PLUS;
             is_branch_e <= BRANCH_NONE;
-
-            csr_write_dat_e_o <= 32'b0;
             
             alu_oper_e  <= ALUOP_NONE;
             alu_sign_e  <= 1'b0;
             lsu_sign_e_o <= 1'b0;
-            reg_read_addr1_e_o <= 5'h0;
+            reg_read_addr1_e <= 5'h0;
             reg_read_addr2_e_o <= 5'h0;
             reg_read_dat1_e <= 32'b0;
             reg_read_dat2_e <= 32'b0;
@@ -101,6 +107,10 @@ module se32p4_e_stage
 
             pc_e <= 32'b0;
             pc_plus_e_o <= 32'b0;
+
+            csr_oper_e <= CSROP_NONE;
+            csr_write_en_e <= 1'b0;
+            sel_csr_read_dat1_addr_e <= 1'b0; 
         end else if (load_en_i == 1'b1) begin
             immediate_e <= immediate_d_i;
 
@@ -110,13 +120,11 @@ module se32p4_e_stage
 
             is_jump_e <= is_jump_d_i;
             is_branch_e <= is_branch_d_i;
-
-            csr_write_dat_e_o <= csr_write_dat_d_i;
             
             alu_oper_e  <= alu_oper_d_i;
             alu_sign_e  <= alu_sign_d_i;
             lsu_sign_e_o <= lsu_sign_d_i;
-            reg_read_addr1_e_o <= reg_read_addr1_d_i;
+            reg_read_addr1_e <= reg_read_addr1_d_i;
             reg_read_addr2_e_o <= reg_read_addr2_d_i;
             reg_read_dat1_e <= reg_read_dat1_d_i;
             reg_read_dat2_e <= reg_read_dat2_d_i;
@@ -127,35 +135,14 @@ module se32p4_e_stage
 
             pc_e <= pc_d_i;
             pc_plus_e_o <= pc_plus_d_i;
-        end else if (flush_i == 1'b1) begin
-            immediate_e <= 32'b0;
 
-            sel_load_store_e_o <= LSU_NONE;
-            sel_alu_immed_oper_b_e <= 1'b0;
-            sel_reg_write_e_o <= W_REG_NONE;
-
-            is_jump_e <= SEL_PC_PLUS;
-            is_branch_e <= BRANCH_NONE;
-
-            csr_write_dat_e_o <= 32'b0;
-            
-            alu_oper_e  <= ALUOP_NONE;
-            alu_sign_e  <= 1'b0;
-            lsu_sign_e_o <= 1'b0;
-            reg_read_addr1_e_o <= 5'h0;
-            reg_read_addr2_e_o <= 5'h0;
-            reg_read_dat1_e <= 32'b0;
-            reg_read_dat2_e <= 32'b0;
-            reg_write_addr3_e_o <= 5'b0;
-            reg_write_en_e_o <= 1'b0;
-            memory_en_e_o <= '{1'b0, 1'b0};
-            ls_type_e_o <= LS_NONE;
-
-            pc_e <= 32'b0;
-            pc_plus_e_o <= 32'b0;
+            csr_oper_e <= csr_oper_d_i;
+            csr_write_en_e <= csr_write_en_d_i;
+            sel_csr_read_dat1_addr_e <= sel_csr_read_dat1_addr_d_i; 
         end
     end
 
+    assign reg_read_addr1_e_o = reg_read_addr1_e;
     assign immediate_e_o = immediate_e;
     assign reg_read_dat2_e_o = (forward_oper_b_e_i == 1'b1) ? forward_reg_write_dat3_w_i : reg_read_dat2_e;
 
@@ -202,5 +189,18 @@ module se32p4_e_stage
 
     assign pc_target_e_o = immediate_e + pc_e;
     assign pc_jalr_e_o = reg_read_dat1_e + immediate_e;
+
+
+    assign csr_read_dat_e = (sel_csr_read_dat1_addr_e == 1'b0) ? {27'b0, reg_read_addr1_e} : alu_oper_a_e;
+
+    se32p4_csr u_csr (
+        .clk_i,
+        .rstn_i,
+        .csr_write_en_i(csr_write_en_e & load_en_i),
+        .csr_oper_i(csr_oper_e),
+        .csr_addr_i(immediate_e),
+        .csr_read_dat_i(csr_read_dat_e),
+        .csr_write_dat_o(csr_write_dat_e_o)
+    );
 
 endmodule

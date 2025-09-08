@@ -4,6 +4,7 @@ module se32p4_w_stage
 (
     input logic clk_i,
     input logic rstn_i,
+    input logic flush_i,
     input logic load_en_i,
     
     input logic [31:0] immediate_e_i,
@@ -13,17 +14,23 @@ module se32p4_w_stage
     input logic [31:0] reg_read_dat2_e_i,
     input logic lsu_sign_e_i,
 
+    input sel_pc_t pc_sel_e_i,
     input logic [31:0] pc_plus_e_i,
     input logic [31:0] pc_target_e_i,
+    input logic [31:0] pc_jalr_e_i,
 
 	input sel_lsu_t sel_load_store_e_i,
     input sel_wreg_t sel_reg_write_e_i,
     input logic [4:0] reg_write_addr3_e_i,
 	output logic [31:0] reg_write_dat3_w_o,
 
+    output sel_pc_t pc_sel_w_o,
+	output logic [31:0] pc_target_w_o,
+    output logic [31:0] pc_jalr_w_o,
+
     input logic reg_write_en_e_i,
     input mem_rw_en_t memory_en_e_i,
-    input load_store_t ls_type_e_i,
+    input load_store_t ls_type_e_i,	
 
 	output logic reg_write_en_w_o,
     output sel_wreg_t sel_reg_write_w_o,
@@ -53,8 +60,10 @@ module se32p4_w_stage
     logic [31:0] lsu_unalign_dat;
     logic [31:0] lsu_align_dat;
 
+	assign pc_target_w_o = pc_target_w;
+
 	always_ff @(posedge clk_i, negedge rstn_i) begin : e_w_stage
-		if (rstn_i == 1'b0) begin
+		if (rstn_i == 1'b0 || flush_i == 1'b1) begin
 			immediate_w <= 32'b0;
 			csr_write_dat_w <= 32'b0;
 			alu_result_w <= 32'b0;
@@ -68,6 +77,8 @@ module se32p4_w_stage
 			sel_load_store_w <= LSU_NONE;
 			lsu_sign_w <= 1'b0;
 			ls_type_w <= LS_NONE;
+			pc_sel_w_o <= SEL_PC_PLUS;
+			pc_jalr_w_o <= 32'b0;
 		end else if (load_en_i == 1'b1) begin
 			immediate_w <= immediate_e_i;
 			csr_write_dat_w <= csr_write_dat_e_i;
@@ -82,6 +93,8 @@ module se32p4_w_stage
 			sel_load_store_w <= sel_load_store_e_i;
 			lsu_sign_w <= lsu_sign_e_i;
 			ls_type_w <= ls_type_e_i;
+			pc_sel_w_o <= pc_sel_e_i;
+			pc_jalr_w_o <= pc_jalr_e_i;
 		end
 	end
 

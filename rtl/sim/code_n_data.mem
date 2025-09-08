@@ -2,6 +2,8 @@
 0x00700093  # addi x1, x0, 7
 0x00110133  # add x2, x2, x1
 0x00002183  # lw x3, 0(x0)
-0xfe314ae3  # blt x2, x3, -12
+0x301192f3  # csrrw x5, misa, x3
+0x301022f3  # csrrs x5, misa, x0
+0xfe5146e3  # blt x2, x5, -20
 0x00218233  # add x4, x3, x2
 0x00000013  # addi x0, x0, 0

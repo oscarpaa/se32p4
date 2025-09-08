@@ -5,7 +5,7 @@ module se32p4_controller
     input logic clk_i,
     input logic rstn_i,
 
-    input sel_pc_t pc_sel_e_i,
+    input sel_pc_t pc_sel_w_i,
 
     input logic reg_write_en_w_i,
     input logic [4:0] reg_read_addr1_e_i, 
@@ -43,7 +43,7 @@ module se32p4_controller
         end
     end
 
-    assign flush_o = (pc_sel_e_i != SEL_PC_PLUS) ? 1'b1 : 1'b0;
+    assign flush_o = (pc_sel_w_i != SEL_PC_PLUS) ? 1'b1 : 1'b0;
 
     always_comb begin
         if (reg_write_en_w_i == 1'b1) begin
