@@ -72,7 +72,7 @@ module se32p4_e_stage
     sel_pc_t is_jump_e;
     branch_t is_branch_e;
 
-    logic [1:0] compare_e;
+    logic [1:0] cmp_bits_e;
 
     logic [31:0] pc_e;
     logic [4:0] reg_read_addr1_e;
@@ -167,7 +167,7 @@ module se32p4_e_stage
         .oper_b_i(alu_oper_b_e),
         .oper_res_o(alu_result_e_o),
         .oper_sign_i(alu_sign_e),
-        .compare_o(compare_e)
+        .cmp_bits_o(cmp_bits_e)
     );
 
     always_comb begin : pc_next_select
@@ -175,13 +175,13 @@ module se32p4_e_stage
             BRANCH_NONE: 
                 pc_sel_e_o <= is_jump_e;
             BRANCH_BEQ:
-                pc_sel_e_o <= (compare_e[0] == 1'b1) ? SEL_PC_TARGET : SEL_PC_PLUS;
+                pc_sel_e_o <= (cmp_bits_e[0] == 1'b1) ? SEL_PC_TARGET : SEL_PC_PLUS;
             BRANCH_BNE:
-                pc_sel_e_o <= (compare_e[0] == 1'b0) ? SEL_PC_TARGET : SEL_PC_PLUS;
+                pc_sel_e_o <= (cmp_bits_e[0] == 1'b0) ? SEL_PC_TARGET : SEL_PC_PLUS;
             BRANCH_BLT:
-                pc_sel_e_o <= (compare_e[1] == 1'b1) ? SEL_PC_TARGET : SEL_PC_PLUS;
+                pc_sel_e_o <= (cmp_bits_e[1] == 1'b1) ? SEL_PC_TARGET : SEL_PC_PLUS;
             BRANCH_BGE:
-                pc_sel_e_o <= (compare_e[1] == 1'b0) ? SEL_PC_TARGET : SEL_PC_PLUS;
+                pc_sel_e_o <= (cmp_bits_e[1] == 1'b0) ? SEL_PC_TARGET : SEL_PC_PLUS;
             default:
                 pc_sel_e_o <= SEL_PC_PLUS;
         endcase
