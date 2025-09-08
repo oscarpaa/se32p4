@@ -75,7 +75,7 @@ module se32p4_e_stage
     logic [31:0] pc_e;
 
     always_ff @(posedge clk_i, negedge rstn_i) begin : d_e_stage
-        if (rstn_i == 1'b0 || flush_i == 1'b1) begin
+        if (rstn_i == 1'b0) begin
             immediate_e <= 32'b0;
 
             sel_load_store_e_o <= LSU_NONE;
@@ -127,6 +127,32 @@ module se32p4_e_stage
 
             pc_e <= pc_d_i;
             pc_plus_e_o <= pc_plus_d_i;
+        end else if (flush_i == 1'b1) begin
+            immediate_e <= 32'b0;
+
+            sel_load_store_e_o <= LSU_NONE;
+            sel_alu_immed_oper_b_e <= 1'b0;
+            sel_reg_write_e_o <= W_REG_NONE;
+
+            is_jump_e <= SEL_PC_PLUS;
+            is_branch_e <= BRANCH_NONE;
+
+            csr_write_dat_e_o <= 32'b0;
+            
+            alu_oper_e  <= ALUOP_NONE;
+            alu_sign_e  <= 1'b0;
+            lsu_sign_e_o <= 1'b0;
+            reg_read_addr1_e_o <= 5'h0;
+            reg_read_addr2_e_o <= 5'h0;
+            reg_read_dat1_e <= 32'b0;
+            reg_read_dat2_e <= 32'b0;
+            reg_write_addr3_e_o <= 5'b0;
+            reg_write_en_e_o <= 1'b0;
+            memory_en_e_o <= '{1'b0, 1'b0};
+            ls_type_e_o <= LS_NONE;
+
+            pc_e <= 32'b0;
+            pc_plus_e_o <= 32'b0;
         end
     end
 

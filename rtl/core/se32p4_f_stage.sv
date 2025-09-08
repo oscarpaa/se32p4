@@ -17,7 +17,8 @@ module se32p4_f_stage
     input logic [31:0] pc_jalr_e_i,
 
     output logic [31:0] pc_f_o,
-    output logic [31:0] pc_plus_f_o    
+    output logic [31:0] pc_plus_f_o,
+    output logic [31:0] pc_next_f_o
 );
     logic is_compressed;
 
@@ -38,7 +39,8 @@ module se32p4_f_stage
 
     assign pc_plus_f = (is_compressed == 1'b1) ? pc_f + 2 : pc_f + 4;
 
-    assign pc_f_o = pc_next_f;
+    assign pc_next_f_o = pc_next_f;
+    assign pc_f_o = pc_f;
     assign pc_plus_f_o = pc_plus_f;
 
     se32p4_c_decoder u_c_decoder (

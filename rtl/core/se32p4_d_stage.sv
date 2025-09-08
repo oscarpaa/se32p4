@@ -57,7 +57,7 @@ module se32p4_d_stage
     logic reg_write_en_w;
 
     always_ff @(posedge clk_i, negedge rstn_i) begin : f_d_stage
-        if (rstn_i == 1'b0 || flush_i == 1'b1) begin
+        if (rstn_i == 1'b0) begin
             pc_d_o      <= 32'b0;
             mem_instr_d <= 32'b0;
             pc_plus_d_o <= 32'b0;
@@ -65,6 +65,10 @@ module se32p4_d_stage
             pc_d_o      <= pc_f_i;
             mem_instr_d <= mem_instr_f_i;
             pc_plus_d_o <= pc_plus_f_i;
+        end else if (flush_i == 1'b1) begin
+            pc_d_o      <= 32'b0;
+            mem_instr_d <= 32'b0;
+            pc_plus_d_o <= 32'b0;
         end
     end
 

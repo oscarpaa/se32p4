@@ -20,6 +20,7 @@ module se32p4_core
 
     logic [31:0] pc_f, pc_d;
     logic [31:0] pc_plus_f, pc_plus_d, pc_plus_e;
+    logic [31:0] pc_next_f;
     logic [31:0] immediate_d, immediate_e;
     load_store_t ls_type_d, ls_type_e;
 
@@ -75,7 +76,7 @@ module se32p4_core
 
     assign mem_instr_read_en_o = load_en;
 
-    assign pc_o = pc_f;
+    assign pc_o = pc_next_f;
     
     se32p4_f_stage #(.BOOT_ADDRESS(BOOT_ADDRESS)) u_f_stage (
         .clk_i,
@@ -87,7 +88,8 @@ module se32p4_core
         .pc_target_e_i(pc_target_e),
         .pc_jalr_e_i(pc_jalr_e),
         .pc_f_o(pc_f),
-        .pc_plus_f_o(pc_plus_f)    
+        .pc_plus_f_o(pc_plus_f),
+        .pc_next_f_o(pc_next_f)
     );
     
     se32p4_d_stage u_d_stage (

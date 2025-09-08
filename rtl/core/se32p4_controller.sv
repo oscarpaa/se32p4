@@ -20,10 +20,6 @@ module se32p4_controller
 
     logic mem_rdat_active;
 
-    assign mem_rdat_active = (sel_reg_write_w_i == W_REG_READ_DATA) ? 1'b1 : 1'b0;
-
-    assign flush_o = (pc_sel_e_i != SEL_PC_PLUS) ? 1'b1 : 1'b0; 
-
     always_ff @(posedge clk_i, negedge rstn_i) begin
         if (rstn_i == 1'b0) begin
             cur_load_state <= 1'b0;
@@ -31,6 +27,8 @@ module se32p4_controller
             cur_load_state <= nxt_load_state;
         end
     end
+
+    assign mem_rdat_active = (sel_reg_write_w_i == W_REG_READ_DATA) ? 1'b1 : 1'b0;
 
     always_comb begin
         nxt_load_state <= cur_load_state;
@@ -44,7 +42,9 @@ module se32p4_controller
             nxt_load_state <= 1'b0;
         end
     end
-    
+
+    assign flush_o = (pc_sel_e_i != SEL_PC_PLUS) ? 1'b1 : 1'b0;
+
     always_comb begin
         if (reg_write_en_w_i == 1'b1) begin
             if ((reg_read_addr1_e_i == reg_write_addr3_w_i) && reg_read_addr1_e_i != 5'h0)
