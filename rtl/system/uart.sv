@@ -11,7 +11,7 @@ module uart #(
     input logic [3:0] byte_en_i,
     input logic read_en_i, write_en_i,
 
-    ouput logic tx_bit_o,
+    output logic tx_bit_o,
     input logic [31:0] tx_dat_i,
     input logic rx_bit_i,
     output logic [31:0] rx_dat_o
@@ -30,37 +30,46 @@ module uart #(
     uart_states_t cur_rx_state, nxt_rx_state;
 
     logic [7:0] tx_fifo, rx_fifo;
-
     logic [2:0] cur_tx_dat_bit_cnt, nxt_tx_dat_bit_cnt;
+    logic [2:0] cur_rx_dat_bit_cnt, nxt_rx_dat_bit_cnt;
 
-    logic tx_req;
-    logic tx_ack;
-
-    logic rx_req;
-    logic rx_ack;
+    logic tx_req, cur_tx_req, nxt_tx_req;
+    logic rx_ack, cur_rx_ack, nxt_rx_ack;
 
     always_ff @(posedge clk_i) begin
         if (write_en_i == 1'b1 && byte_en_i[1] == 1'b1) begin
             tx_fifo <= tx_dat_i[15:8];
-            // tx_req <= 1'b1;
-        end
+            tx_req <= 1'b1;
+        end else
+            tx_req <= 1'b0;
 
         if (read_en_i == 1'b1 && byte_en_i[1] == 1'b1) begin
-            // rx_ack <= rx_req;
-        end
+            rx_ack <= 1'b1;
+        end else
+            rx_ack <= 1'b0;
     end
+    
+    assign rx_dat_o = {timer, rx_fifo, 6'b0, rx_ack, tx_req};
 
     always_ff @(posedge clk_i, negedge rstn_i) begin
         if (rstn_i == 1'b0) begin
+            cur_tx_req <= 1'b0;
             cur_tx_state <= UART_IDLE_ST;
             cur_tx_dat_bit_cnt <= 3'b0;
 
+            cur_rx_ack <= 1'b0;
             cur_rx_state <= UART_IDLE_ST;
+            rx_fifo <= 8'b0;
+            cur_rx_dat_bit_cnt <= 3'b0;
         end else begin
+            cur_tx_req <= nxt_tx_req;
             cur_tx_state <= nxt_tx_state;
             cur_tx_dat_bit_cnt <= nxt_tx_dat_bit_cnt;
 
+            cur_rx_ack <= nxt_rx_ack;
             cur_rx_state <= nxt_rx_state;
+            rx_fifo[cur_rx_dat_bit_cnt] <= rx_bit_i;
+            cur_rx_dat_bit_cnt <= nxt_rx_dat_bit_cnt;
         end
     end
 
@@ -74,6 +83,7 @@ module uart #(
     end
 
     always_comb begin : fsm_to_tx
+        nxt_tx_req <= cur_tx_req;
         nxt_tx_state <= cur_tx_state;
         nxt_tx_dat_bit_cnt <= cur_tx_dat_bit_cnt;
         tx_bit_o <= 1'b1;
@@ -81,8 +91,10 @@ module uart #(
         if (tx_timer == 16'h0) begin
             unique case(cur_tx_state)
                 UART_IDLE_ST: begin
-                    // TODO: when jump to start ?
-                    nxt_tx_state <= UART_START_ST;
+                    if (tx_req == 1'b1) begin
+                        nxt_tx_req <= 1'b1;
+                        nxt_tx_state <= UART_START_ST;
+                    end
                 end
                 UART_START_ST: begin
                     tx_bit_o <= 1'b0;
@@ -90,16 +102,60 @@ module uart #(
                 end
                 UART_DATA_ST: begin
                     if (cur_tx_dat_bit_cnt <= 3'h7) begin
-                        tx_bit_o <= tx_fifo[cur_tx_dat_bit_cnt]
+                        tx_bit_o <= tx_fifo[cur_tx_dat_bit_cnt];
                         nxt_tx_dat_bit_cnt <= cur_tx_dat_bit_cnt + 1;
                     end 
 
-                    if (cur_tx_dat_bit_cnt == 3'h7)
+                    if (cur_tx_dat_bit_cnt == 3'h7) begin
                         nxt_tx_state <= UART_STOP_ST;
                     end
                 end
                 UART_STOP_ST: begin
                     nxt_tx_state <= UART_IDLE_ST;
+                    nxt_tx_req <= 1'b0;
+
+                end
+            endcase
+        end
+    end
+
+    always_ff @(posedge clk_i) begin
+        if (cur_rx_state == UART_IDLE_ST)
+            rx_timer <= {1'b0, timer[15:1]};
+        else if (rx_timer != 16'h0)
+            rx_timer <= rx_timer - 1;
+        else
+            rx_timer <= timer;
+    end
+
+    always_comb begin : fsm_to_rx
+        nxt_rx_ack <= cur_rx_ack;
+        nxt_rx_state <= cur_rx_state;
+        nxt_rx_dat_bit_cnt <= cur_rx_dat_bit_cnt;
+
+        if (rx_timer == 16'h0) begin
+            unique case(cur_rx_state)
+                UART_IDLE_ST: begin
+                    if (rx_ack == 1'b1) begin
+                        nxt_rx_ack <= 1'b1;
+                        nxt_rx_state <= UART_START_ST;
+                    end
+                end
+                UART_START_ST: begin
+                    nxt_rx_state <= UART_DATA_ST;
+                end
+                UART_DATA_ST: begin
+                    if (cur_rx_dat_bit_cnt <= 3'h7) begin
+                        nxt_rx_dat_bit_cnt <= cur_rx_dat_bit_cnt + 1;
+                    end 
+
+                    if (cur_rx_dat_bit_cnt == 3'h7) begin
+                        nxt_rx_state <= UART_STOP_ST;
+                    end
+                end
+                UART_STOP_ST: begin
+                    nxt_rx_state <= UART_IDLE_ST;
+                    nxt_rx_ack <= 1'b0;
                 end
             endcase
         end

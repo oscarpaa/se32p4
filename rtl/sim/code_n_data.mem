@@ -7,3 +7,5 @@
 0xfe5147e3  # blt x2, x5, -18
 0x00218233  # add x4, x3, x2
 0x00000013  # addi x0, x0, 0
+
+# TODO: PRINT A
