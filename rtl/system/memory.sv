@@ -28,7 +28,7 @@ module memory #(
                 for (int i = 0; i < MEM_HALF_WORDS_LEN; i = i+1) begin
                     SYS_MEMORY[i] = 16'hFFFF;
                 end
-                $readmemh("/home/oscar/vivadowork/se32p4/rtl/sim/chunks_code_n_data.mem", SYS_MEMORY);
+                $readmemh("/home/oscar/Development/vivadowork/se32p4/rtl/sim/chunks_code_n_data.mem", SYS_MEMORY);
             end
         end else begin
             assign mem_rstn = rstn_i; 

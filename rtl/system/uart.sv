@@ -44,12 +44,12 @@ module uart #(
             tx_req <= 1'b0;
 
         if (read_en_i == 1'b1 && byte_en_i[1] == 1'b1) begin
-            rx_ack <= 1'b1;
-        end else
             rx_ack <= 1'b0;
+        end else
+            rx_ack <= 1'b1;
     end
     
-    assign rx_dat_o = {timer, rx_fifo, 6'b0, rx_ack, tx_req};
+    assign rx_dat_o = {timer, rx_fifo, 6'b0, cur_rx_ack, cur_tx_req};
 
     always_ff @(posedge clk_i, negedge rstn_i) begin
         if (rstn_i == 1'b0) begin
@@ -57,7 +57,7 @@ module uart #(
             cur_tx_state <= UART_IDLE_ST;
             cur_tx_dat_bit_cnt <= 3'b0;
 
-            cur_rx_ack <= 1'b0;
+            cur_rx_ack <= 1'b1;
             cur_rx_state <= UART_IDLE_ST;
             rx_fifo <= 8'b0;
             cur_rx_dat_bit_cnt <= 3'b0;
@@ -136,8 +136,8 @@ module uart #(
         if (rx_timer == 16'h0) begin
             unique case(cur_rx_state)
                 UART_IDLE_ST: begin
-                    if (rx_ack == 1'b1) begin
-                        nxt_rx_ack <= 1'b1;
+                    if (rx_ack == 1'b0) begin
+                        nxt_rx_ack <= 1'b0;
                         nxt_rx_state <= UART_START_ST;
                     end
                 end
@@ -155,7 +155,7 @@ module uart #(
                 end
                 UART_STOP_ST: begin
                     nxt_rx_state <= UART_IDLE_ST;
-                    nxt_rx_ack <= 1'b0;
+                    nxt_rx_ack <= 1'b1;
                 end
             endcase
         end
