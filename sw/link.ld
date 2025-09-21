@@ -29,11 +29,13 @@ SECTIONS
      /* Uninitialized data section */
     .bss : ALIGN(4)
     {
+        __bss_start = .;
         *(.bss)
         *(.bss*)
         *(.sbss)
         *(.sbss*)
         *(COMMON)
+        __bss_end = .;
     } > RAM
 
     /* this is to define the start of the heap */

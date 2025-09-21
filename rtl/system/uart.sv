@@ -33,8 +33,8 @@ module uart #(
     logic [2:0] cur_tx_dat_bit_cnt, nxt_tx_dat_bit_cnt;
     logic [2:0] cur_rx_dat_bit_cnt, nxt_rx_dat_bit_cnt;
 
-    logic tx_req, cur_tx_req, nxt_tx_req;
-    logic rx_ack, cur_rx_ack, nxt_rx_ack;
+    logic tx_req, cur_tx_start, nxt_tx_start;
+    logic rx_req, cur_rx_start, nxt_rx_start;
 
     always_ff @(posedge clk_i) begin
         if (write_en_i == 1'b1 && byte_en_i[1] == 1'b1) begin
@@ -44,29 +44,29 @@ module uart #(
             tx_req <= 1'b0;
 
         if (read_en_i == 1'b1 && byte_en_i[1] == 1'b1) begin
-            rx_ack <= 1'b0;
+            rx_req <= 1'b1;
         end else
-            rx_ack <= 1'b1;
+            rx_req <= 1'b0;
     end
     
-    assign rx_dat_o = {timer, rx_fifo, 6'b0, cur_rx_ack, cur_tx_req};
+    assign rx_dat_o = {timer, rx_fifo, 6'b0, cur_rx_start, cur_tx_start};
 
     always_ff @(posedge clk_i, negedge rstn_i) begin
         if (rstn_i == 1'b0) begin
-            cur_tx_req <= 1'b0;
+            cur_tx_start <= 1'b0;
             cur_tx_state <= UART_IDLE_ST;
             cur_tx_dat_bit_cnt <= 3'b0;
 
-            cur_rx_ack <= 1'b1;
+            cur_rx_start <= 1'b0;
             cur_rx_state <= UART_IDLE_ST;
             rx_fifo <= 8'b0;
             cur_rx_dat_bit_cnt <= 3'b0;
         end else begin
-            cur_tx_req <= nxt_tx_req;
+            cur_tx_start <= nxt_tx_start;
             cur_tx_state <= nxt_tx_state;
             cur_tx_dat_bit_cnt <= nxt_tx_dat_bit_cnt;
 
-            cur_rx_ack <= nxt_rx_ack;
+            cur_rx_start <= nxt_rx_start;
             cur_rx_state <= nxt_rx_state;
             rx_fifo[cur_rx_dat_bit_cnt] <= rx_bit_i;
             cur_rx_dat_bit_cnt <= nxt_rx_dat_bit_cnt;
@@ -83,45 +83,47 @@ module uart #(
     end
 
     always_comb begin : fsm_to_tx
-        nxt_tx_req <= cur_tx_req;
+        nxt_tx_start <= cur_tx_start;
         nxt_tx_state <= cur_tx_state;
         nxt_tx_dat_bit_cnt <= cur_tx_dat_bit_cnt;
         tx_bit_o <= 1'b1;
 
-        if (tx_timer == 16'h0) begin
-            unique case(cur_tx_state)
-                UART_IDLE_ST: begin
-                    if (tx_req == 1'b1) begin
-                        nxt_tx_req <= 1'b1;
-                        nxt_tx_state <= UART_START_ST;
-                    end
+        unique case(cur_tx_state)
+            UART_IDLE_ST: begin
+                if (tx_req == 1'b1) begin
+                    nxt_tx_start <= 1'b1;
+                    nxt_tx_state <= UART_START_ST;
                 end
-                UART_START_ST: begin
-                    tx_bit_o <= 1'b0;
+            end
+            UART_START_ST: begin
+                tx_bit_o <= 1'b0;
+                if (tx_timer == 16'h0)
                     nxt_tx_state <= UART_DATA_ST;
-                end
-                UART_DATA_ST: begin
-                    if (cur_tx_dat_bit_cnt <= 3'h7) begin
-                        tx_bit_o <= tx_fifo[cur_tx_dat_bit_cnt];
+            end
+            UART_DATA_ST: begin
+                if (cur_tx_dat_bit_cnt <= 3'h7) begin
+                    tx_bit_o <= tx_fifo[cur_tx_dat_bit_cnt];
+                    if (tx_timer == 16'h0)
                         nxt_tx_dat_bit_cnt <= cur_tx_dat_bit_cnt + 1;
-                    end 
+                end 
 
-                    if (cur_tx_dat_bit_cnt == 3'h7) begin
+                if (cur_tx_dat_bit_cnt == 3'h7) begin
+                    if (tx_timer == 16'h0)
                         nxt_tx_state <= UART_STOP_ST;
-                    end
                 end
-                UART_STOP_ST: begin
+            end
+            UART_STOP_ST: begin
+                if (tx_timer == 16'h0) begin
                     nxt_tx_state <= UART_IDLE_ST;
-                    nxt_tx_req <= 1'b0;
-
+                    nxt_tx_start <= 1'b0;
                 end
-            endcase
-        end
+            end
+        endcase
     end
 
     always_ff @(posedge clk_i) begin
         if (cur_rx_state == UART_IDLE_ST)
-            rx_timer <= {1'b0, timer[15:1]};
+            rx_timer <= {1'b0, timer[15:1]}; // timer / 2
         else if (rx_timer != 16'h0)
             rx_timer <= rx_timer - 1;
         else
@@ -129,36 +131,39 @@ module uart #(
     end
 
     always_comb begin : fsm_to_rx
-        nxt_rx_ack <= cur_rx_ack;
+        nxt_rx_start <= cur_rx_start;
         nxt_rx_state <= cur_rx_state;
         nxt_rx_dat_bit_cnt <= cur_rx_dat_bit_cnt;
 
-        if (rx_timer == 16'h0) begin
-            unique case(cur_rx_state)
-                UART_IDLE_ST: begin
-                    if (rx_ack == 1'b0) begin
-                        nxt_rx_ack <= 1'b0;
-                        nxt_rx_state <= UART_START_ST;
-                    end
+        unique case(cur_rx_state)
+            UART_IDLE_ST: begin
+                nxt_rx_start <= 1'b0;
+                if (rx_req == 1'b1) begin
+                    nxt_rx_state <= UART_START_ST;
                 end
-                UART_START_ST: begin
+            end
+            UART_START_ST: begin
+                if (rx_timer == 16'h0)
                     nxt_rx_state <= UART_DATA_ST;
-                end
-                UART_DATA_ST: begin
-                    if (cur_rx_dat_bit_cnt <= 3'h7) begin
+            end
+            UART_DATA_ST: begin
+                if (cur_rx_dat_bit_cnt <= 3'h7) begin
+                    if (rx_timer == 16'h0)
                         nxt_rx_dat_bit_cnt <= cur_rx_dat_bit_cnt + 1;
-                    end 
+                end 
 
-                    if (cur_rx_dat_bit_cnt == 3'h7) begin
+                if (cur_rx_dat_bit_cnt == 3'h7) begin
+                    if (rx_timer == 16'h0)
                         nxt_rx_state <= UART_STOP_ST;
-                    end
                 end
-                UART_STOP_ST: begin
+            end
+            UART_STOP_ST: begin
+                if (rx_timer == 16'h0) begin
                     nxt_rx_state <= UART_IDLE_ST;
-                    nxt_rx_ack <= 1'b1;
+                    nxt_rx_start <= 1'b1;
                 end
-            endcase
-        end
+            end
+        endcase
     end
 
 endmodule

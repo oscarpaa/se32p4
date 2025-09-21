@@ -12,8 +12,8 @@ module core #(
     input logic clk_i,
     input logic rstn_i,
 
-    output logic tx_bit_o,
-    input logic rx_bit_i
+    input logic rx_bit_i,
+    output logic tx_bit_o
 );
 
     logic [31:0] pc;
