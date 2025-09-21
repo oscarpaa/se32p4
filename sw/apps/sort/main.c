@@ -1,10 +1,6 @@
-
-#include <io.h>
 #include <stdio.h>
 
-#define N 5
-
-int unsorted_list[N] = {12, 7, 40, 3, 9};
+#define N 6
 
 void printarray(int *array)
 {
@@ -34,18 +30,20 @@ int *sort(int *array)
     return array;
 }
 
-int main()
+int main(void)
 {
+    // TODO: test with global array
+    int unsorted_list[] = {12, 7, 40, 3, 9, -2};
+    printf("\n[-] unsorted: ");
     printarray(unsorted_list);
+
     int *array = sort(unsorted_list);
+    printf("[-] sorted:   ");
     printarray(array);
 
-    while(1)
-    {
-        char  buffer[64];
-        memset(buffer,0,sizeof(buffer));
-        gets(buffer,sizeof(buffer));
-    }
+    printf("\nPress <enter> to restart...\n");
+    char c;
+    scanf(" %c", &c);
 
     return 0;
 }

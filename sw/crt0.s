@@ -1,18 +1,31 @@
+.section .text.start
+.globl _start
 
-.section text.start
+_start:
+    /* Initialize stack pointer */
+    la sp, _stack
 
-_init:
-    la sp, _sp
-    # la gp, 
+    /* Initialize global pointer */
+    .option push
+    .option norelax
+    la gp, __global_pointer$
+    .option pop
 
-/* clear the bss segment */
-_init_bss:
+    /* Clear .bss segment */
     la a0, __bss_start
-    la a2, __bss_end
-    sub a2, a2, a0
-    li a1, 0
+    la a1, __bss_end
+    sub a1, a1, a0       /* length = __bss_end - __bss_start */
+    li a2, 0
     call memset
 
+    /* Call user initialization if any */
     call banner
 
+    /* Call main function */
     call main
+
+    /* If main returns, loop here */
+# 1:
+#     j 1b
+
+    j _start

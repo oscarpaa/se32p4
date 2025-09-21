@@ -17,4 +17,6 @@ void banner() {
 "                                        | $$                \n"
 "                                        | $$                \n"
 "                                        |__/                \n");
+
+	printf("\nWelcome to RISCV!\n");
 }

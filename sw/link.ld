@@ -1,57 +1,66 @@
 MEMORY
 {
-    RAM(rwxai) : ORIGIN = 0x0, LENGTH = 0x1000
+    RAM(rwxai) : ORIGIN = 0x0, LENGTH = 0x8000 /* 32 KB */
 }
 
 SECTIONS
 {
-    __stack_size = 0x800;
-    __heap_size  = 0x400;
+    __stack_size = 0x800; /* 2 KB */
+    __heap_size  = 0x400; /* 1 KB */
 
-    .text :
+    /* Code and read-only data section */
+    .text : ALIGN(4)
     {
-        *(.text)           /* .text sections (code) */
-        *(.text*)          /* .text* sections (code) */
-        *(.rodata)         /* .rodata sections (constants, strings, etc.) */
-        *(.rodata*)        /* .rodata* sections (constants, strings, etc.) */
-        *(.srodata)        /* .rodata sections (constants, strings, etc.) */
-        *(.srodata*)       /* .rodata* sections (constants, strings, etc.) */
+        *(.text.start)     /* C Runtime Zero */
+        *(.text)           /* All code (.text) */
+        *(.text*)          /* Any .text* sections */
+        *(.rodata)         /* Read-only constants */
+        *(.rodata*)        /* Read-only constants variants */
+        *(.srodata)        /* Small read-only data */
+        *(.srodata*)       /* Small read-only data variants */
+        _etext = .;        /* End of .text section */
     } > RAM
 
+    /* Initialized data section */
     .data : ALIGN(4)
     {
-        *(.data)           /* .data sections */
-        *(.data*)          /* .data* sections */
-        *(.sdata)          /* .sdata sections */
-        *(.sdata*)         /* .sdata* sections */
+        *(.data)           /* Initialized data */
+        *(.data*)          /* Variants */
+        *(.sdata)          /* Small initialized data */
+        *(.sdata*)
+
+        /* Global pointer symbol for small data access */
+        PROVIDE( __global_pointer$ = . + 0x800 );
     } > RAM
 
-     /* Uninitialized data section */
+    /* Uninitialized data (BSS) section */
     .bss : ALIGN(4)
     {
-        __bss_start = .;
-        *(.bss)
+        __bss_start = .;          /* Start of bss */
+        *(.bss)             /* Uninitialized data */
         *(.bss*)
-        *(.sbss)
+        *(.sbss)            /* Small uninitialized data */
         *(.sbss*)
-        *(COMMON)
-        __bss_end = .;
+        *(COMMON)           /* Common symbols */
+        __bss_end = .;          /* End of bss */
     } > RAM
 
-    /* this is to define the start of the heap */
-    .heap : ALIGN(4)
+    /* Heap section (dynamic memory) */
+    .heap (NOLOAD) : ALIGN(8)
     {
         __heap_start = .;
-        . = __heap_size;
+        . += __heap_size;   /* Reserve heap space */
         __heap_end = .;
     } > RAM
 
-    /* stack */
-    .stack : ALIGN(4)
+    /* Stack section */
+    .stack (NOLOAD) : ALIGN(8)
     {
-       __stack_start = .;
-       . = __stack_size;
-       _sp = .;
-       __stack_end = .;
+        __stack_start = .;
+        . += __stack_size;  /* Reserve stack space */
+        __stack_end = .;
     } > RAM
+
+    /* Symbol for top of stack to initialize SP */
+    _stack = __stack_end;
 }

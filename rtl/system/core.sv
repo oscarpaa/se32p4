@@ -2,7 +2,7 @@
 module core #(
     parameter bit SIMULATION = 0,
     parameter logic [31:0] BOOT_ADDRESS = 32'b0,
-    parameter int MEM_BYTES_LEN = 4096,
+    parameter int MEM_BYTES_LEN = 32 * 1024, // 32 KB
 
     parameter int BOARD_CLK     = 100_000_000,
     parameter int BOARD_CLK_MUL = 10,
@@ -40,12 +40,13 @@ module core #(
         .mem_read_instr_i(mem_read_instr)
     );
 
-    // TODO: Think about memory map
     assign core_read_dat = (mem_address < MEM_BYTES_LEN)  ? mem_read_dat  : uart_rx_dat;
     assign mem_read_en   = (mem_address < MEM_BYTES_LEN)  ? core_read_en  : 1'b0;
-    assign uart_read_en  = (mem_address >= MEM_BYTES_LEN) ? core_read_en  : 1'b0;
     assign mem_write_en  = (mem_address < MEM_BYTES_LEN)  ? core_write_en : 1'b0;
-    assign uart_write_en = (mem_address >= MEM_BYTES_LEN) ? core_write_en : 1'b0;
+    
+    // UART0_BASE = MEM_BASE_END
+    assign uart_read_en  = (mem_address[31:2] == (MEM_BYTES_LEN >> 2)) ? core_read_en  : 1'b0;
+    assign uart_write_en = (mem_address[31:2] == (MEM_BYTES_LEN >> 2)) ? core_write_en : 1'b0;
     
     memory #(
         .SIMULATION(SIMULATION),
