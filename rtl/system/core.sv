@@ -26,7 +26,10 @@ module core #(
     logic [31:0] core_read_dat, mem_read_dat, uart_rx_dat;
     logic [31:0] mem_read_instr;
 
-    se32p4_core #(.BOOT_ADDRESS(BOOT_ADDRESS)) u_cpu (
+    se32p4_core #(
+        .BOOT_ADDRESS(BOOT_ADDRESS),
+        .MEM_BYTES_LEN(MEM_BYTES_LEN)
+    ) u_cpu (
         .clk_i,
         .rstn_i,
         .pc_o(pc),

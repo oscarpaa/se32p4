@@ -1,7 +1,9 @@
 
 module se32p4_controller
     import se32p4_pkg::*;
-(
+#(
+    parameter int MEM_BYTES_LEN = 4096
+) (
     input logic clk_i,
     input logic rstn_i,
 
@@ -12,6 +14,7 @@ module se32p4_controller
     input logic [4:0] reg_read_addr2_e_i, 
     input logic [4:0] reg_write_addr3_w_i,
     output logic forward_oper_a_e_o, forward_oper_b_e_o,
+    input logic [31:0] mem_address_w_i,
     input sel_wreg_t sel_reg_write_w_i,
     output logic load_en_o,
     output logic flush_o
@@ -28,7 +31,7 @@ module se32p4_controller
         end
     end
 
-    assign mem_rdat_active = (sel_reg_write_w_i == W_REG_READ_DATA) ? 1'b1 : 1'b0;
+    assign mem_rdat_active = ((sel_reg_write_w_i == W_REG_READ_DATA) && (mem_address_w_i < MEM_BYTES_LEN)) ? 1'b1 : 1'b0;
 
     always_comb begin
         nxt_load_state <= cur_load_state;

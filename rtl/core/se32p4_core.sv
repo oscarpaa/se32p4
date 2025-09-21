@@ -2,7 +2,8 @@
 module se32p4_core 
     import se32p4_pkg::*;
 #(
-    parameter logic [31:0] BOOT_ADDRESS = 32'b0
+    parameter logic [31:0] BOOT_ADDRESS = 32'b0,
+    parameter int MEM_BYTES_LEN = 4096
 ) (
     input logic clk_i,
     input logic rstn_i,
@@ -63,7 +64,13 @@ module se32p4_core
 
     logic load_en, flush;
 
-    se32p4_controller u_controller (
+    logic [31:0] mem_dat_addr;
+
+    assign mem_dat_addr_o = mem_dat_addr;
+
+    se32p4_controller #(
+        .MEM_BYTES_LEN(MEM_BYTES_LEN)
+    ) u_controller (
         .clk_i,
         .rstn_i,
         .pc_sel_w_i(pc_sel_w),
@@ -73,6 +80,7 @@ module se32p4_core
         .reg_write_addr3_w_i(reg_write_addr3_w),
         .forward_oper_a_e_o(forward_oper_a_e),
         .forward_oper_b_e_o(forward_oper_b_e),
+        .mem_address_w_i(mem_dat_addr),
         .sel_reg_write_w_i(sel_reg_write_w),
         .load_en_o(load_en),
         .flush_o(flush)
@@ -208,7 +216,7 @@ module se32p4_core
         .sel_reg_write_w_o(sel_reg_write_w),
         .reg_write_addr3_w_o(reg_write_addr3_w),
         .memory_en_w_o('{mem_read_en_o, mem_write_en_o}),
-        .mem_address_w_o(mem_dat_addr_o),
+        .mem_address_w_o(mem_dat_addr),
         .mem_rdat_i(mem_read_dat_i),
         .mem_byte_en_w_o(mem_byte_en_o),
         .mem_write_dat_o

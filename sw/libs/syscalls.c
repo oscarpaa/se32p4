@@ -9,9 +9,9 @@ ssize_t _read(int fd, void *buf, size_t count) {
 
         while (i < count - 1) {
             uint8_t c = uart_rx_char();
-            buffer[i++] = c;
             if (c == '\n' || c == '\r')
                 break;
+            buffer[i++] = c;
         }
         buffer[i] = 0;
         return i;
