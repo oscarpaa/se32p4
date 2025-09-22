@@ -1,10 +1,16 @@
 #ifndef __SE32P4_SYSCALLS__
 #define __SE32P4_SYSCALLS__
 
+#include "stddef.h"
 #include "unistd.h"
 #include "uart.h"
 
-ssize_t _read(int fd, void *buf, size_t count);
-ssize_t _write(int fd, const void *buf, size_t count);
+void *_sbrk (ptrdiff_t __incr);
+int _close(int file);
+int _fstat(int file, struct stat *st);
+int _isatty(int file);
+int _lseek(int file, int ptr, int dir);
+int _read(int fd, void *buf, size_t count);
+int _write(int fd, const void *buf, size_t count);
 
 #endif

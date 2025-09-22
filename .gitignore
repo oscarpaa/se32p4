@@ -1,2 +1,7 @@
 .vscode/
 fpga/xilinx/
+*.o
+*.s
+*.lst
+*.bin
+*.map

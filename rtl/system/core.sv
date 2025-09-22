@@ -4,17 +4,21 @@ module core #(
     parameter logic [31:0] BOOT_ADDRESS = 32'b0,
     parameter int MEM_BYTES_LEN = 32 * 1024, // 32 KB
 
-    parameter int BOARD_CLK     = 100_000_000,
-    parameter int BOARD_CLK_MUL = 10,
-    parameter int BOARD_CLK_DIV = 20,
-    parameter int UART_BAUD     = 9600
+    parameter int BOARD_CLK_FREQ = 100_000_000,
+    parameter int BOARD_CLK_MUL  = 10,
+    parameter int BOARD_CLK_DIV  = 20,
+    parameter int UART_BAUD      = 9600
 ) (
-    input logic clk_i,
-    input logic rstn_i,
+    input logic board_clk,
+    input logic board_rst,
 
     input logic rx_bit_i,
     output logic tx_bit_o
 );
+    logic sysrst, sysclk;
+    
+    assign sysclk = board_clk;
+    assign sysrst = ~board_rst;
 
     logic [31:0] pc;
     logic [31:0] mem_address;
@@ -30,8 +34,8 @@ module core #(
         .BOOT_ADDRESS(BOOT_ADDRESS),
         .MEM_BYTES_LEN(MEM_BYTES_LEN)
     ) u_cpu (
-        .clk_i,
-        .rstn_i,
+        .clk_i(sysclk),
+        .rstn_i(sysrst),
         .pc_o(pc),
         .mem_dat_addr_o(mem_address),
         .mem_byte_en_o(mem_byte_en),
@@ -55,8 +59,8 @@ module core #(
         .SIMULATION(SIMULATION),
         .MEM_BYTES_LEN(MEM_BYTES_LEN)
     ) u_mem (
-        .clk_i,
-        .rstn_i,
+        .clk_i(sysclk),
+        .rstn_i(sysrst),
         .byte_en_i(mem_byte_en),
         .read_addr1_i(pc),
         .write_addr2_i(mem_address),
@@ -69,13 +73,13 @@ module core #(
     );
 
     uart #(
-        .BOARD_CLK     (BOARD_CLK),
+        .BOARD_CLK_FREQ     (BOARD_CLK_FREQ),
         .BOARD_CLK_MUL (BOARD_CLK_MUL),
         .BOARD_CLK_DIV (BOARD_CLK_DIV),
         .UART_BAUD     (UART_BAUD)
     ) u_uart (
-        .clk_i,
-        .rstn_i,
+        .clk_i(sysclk),
+        .rstn_i(sysrst),
         .byte_en_i(mem_byte_en),
         .read_en_i(uart_read_en),
         .write_en_i(uart_write_en),

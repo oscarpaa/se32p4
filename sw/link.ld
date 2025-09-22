@@ -46,7 +46,7 @@ SECTIONS
     } > RAM
 
     /* Heap section (dynamic memory) */
-    .heap (NOLOAD) : ALIGN(8)
+    .heap (NOLOAD) : ALIGN(4)
     {
         __heap_start = .;
         . += __heap_size;   /* Reserve heap space */
@@ -54,10 +54,10 @@ SECTIONS
     } > RAM
 
     /* Stack section */
-    .stack (NOLOAD) : ALIGN(8)
+    .stack (NOLOAD) : ALIGN(4)
     {
         __stack_start = .;
-        . += __stack_size;  /* Reserve stack space */
+        . += __stack_size;
         __stack_end = .;
     } > RAM
 

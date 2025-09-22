@@ -1,9 +1,9 @@
 
 module uart #(
-    parameter int BOARD_CLK     = 100_000_000,
-    parameter int BOARD_CLK_MUL = 10,
-    parameter int BOARD_CLK_DIV = 20,
-    parameter int UART_BAUD     = 9600
+    parameter int BOARD_CLK_FREQ = 100_000_000,
+    parameter int BOARD_CLK_MUL  = 10,
+    parameter int BOARD_CLK_DIV  = 20,
+    parameter int UART_BAUD      = 9600
 ) (
     input logic clk_i,
     input logic rstn_i,
@@ -16,7 +16,7 @@ module uart #(
     input logic rx_bit_i,
     output logic [31:0] rx_dat_o
 );
-    localparam logic [15:0] timer = ((BOARD_CLK * BOARD_CLK_MUL / BOARD_CLK_DIV) / UART_BAUD); 
+    localparam logic [15:0] timer = ((BOARD_CLK_FREQ * BOARD_CLK_MUL / BOARD_CLK_DIV) / UART_BAUD); 
     logic [15:0] tx_timer, rx_timer;
 
     typedef enum logic [1:0] { 

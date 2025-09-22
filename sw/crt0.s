@@ -12,20 +12,20 @@ _start:
     .option pop
 
     /* Clear .bss segment */
-    la a0, __bss_start
-    la a1, __bss_end
-    sub a1, a1, a0       /* length = __bss_end - __bss_start */
-    li a2, 0
-    call memset
+    # la a0, __bss_start
+    # la a1, __bss_end
+    # sub a1, a1, a0       /* length = __bss_end - __bss_start */
+    # li a2, 0
+    # call memset
 
     /* Call user initialization if any */
-    call banner
+    # call banner
 
     /* Call main function */
     call main
 
     /* If main returns, loop here */
-# 1:
-#     j 1b
+1:
+    j 1b
 
-    j _start
+    # j _start
