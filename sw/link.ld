@@ -1,6 +1,6 @@
 MEMORY
 {
-    RAM(rwxai) : ORIGIN = 0x0, LENGTH = 0x8000 /* 32 KB */
+    RAM(rwxai) : ORIGIN = 0x0, LENGTH = 0x4000 /* 32 KB */
 }
 
 SECTIONS
@@ -9,26 +9,25 @@ SECTIONS
     __heap_size  = 0x400; /* 1 KB */
 
     /* Code and read-only data section */
-    .text : ALIGN(4)
+    .text : ALIGN_WITH_INPUT
     {
         *(.text.start)     /* C Runtime Zero */
         *(.text)           /* All code (.text) */
         *(.text*)          /* Any .text* sections */
-        *(.rodata)         /* Read-only constants */
-        *(.rodata*)        /* Read-only constants variants */
-        *(.srodata)        /* Small read-only data */
-        *(.srodata*)       /* Small read-only data variants */
         _etext = .;        /* End of .text section */
     } > RAM
 
     /* Initialized data section */
     .data : ALIGN(4)
     {
+        *(.rodata)         /* Read-only constants */
+        *(.rodata*)        /* Read-only constants variants */
+        *(.srodata)        /* Small read-only data */
+        *(.srodata*)       /* Small read-only data variants */
         *(.data)           /* Initialized data */
         *(.data*)          /* Variants */
         *(.sdata)          /* Small initialized data */
         *(.sdata*)
-
         /* Global pointer symbol for small data access */
         PROVIDE( __global_pointer$ = . + 0x800 );
     } > RAM

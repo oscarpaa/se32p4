@@ -31,7 +31,7 @@ void *_sbrk(ptrdiff_t incr)
 {
     char *old_brk = brk;
 
-    if (__heap_start == __heap_end) {
+    if (&__heap_start[0] == &__heap_end[0]) {
         return NULL; 
     }
 
@@ -62,11 +62,11 @@ int _lseek(int file, int ptr, int dir) {
 
 int _read(int fd, void *buf, size_t count) {
     if (fd == STDIN_FILENO) {
-        uint8_t *buffer = (uint8_t *)buf;
+        char *buffer = buf;
         uint16_t i = 0;
 
         while (i < count - 1) {
-            uint8_t c = uart_rx_char();
+            char c = uart_rx_char();
             if (c == '\n' || c == '\r')
                 break;
             buffer[i++] = c;
@@ -79,7 +79,7 @@ int _read(int fd, void *buf, size_t count) {
 
 int _write(int fd, const void *buf, size_t count) {
     if (fd == STDOUT_FILENO || fd == STDERR_FILENO) {
-        const uint8_t *buffer = buf;
+        const char *buffer = buf;
         for (size_t i = 0; i < count; i++) {
             uart_tx_char(buffer[i]);
         }

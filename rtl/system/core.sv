@@ -2,7 +2,7 @@
 module core #(
     parameter bit SIMULATION = 0,
     parameter logic [31:0] BOOT_ADDRESS = 32'b0,
-    parameter int MEM_BYTES_LEN = 32 * 1024, // 32 KB
+    parameter int MEM_BYTES_LEN = 16 * 1024, // 32 KB
 
     parameter int BOARD_CLK_FREQ = 100_000_000,
     parameter int BOARD_CLK_MUL  = 10,
@@ -18,14 +18,14 @@ module core #(
     logic sysrst, sysclk;
     
     assign sysclk = board_clk;
-    assign sysrst = ~board_rst;
+    assign sysrst = board_rst;
 
     logic [31:0] pc;
     logic [31:0] mem_address;
     logic [3:0] mem_byte_en;
     logic mem_instr_read_en;
-    logic core_read_en, mem_read_en, uart_rx_en;
-    logic core_write_en, mem_write_en, uart_tx_em;
+    logic core_read_en, mem_read_en, uart_read_en;
+    logic core_write_en, mem_write_en, uart_write_en;
     logic [31:0] core_write_dat;
     logic [31:0] core_read_dat, mem_read_dat, uart_rx_dat;
     logic [31:0] mem_read_instr;

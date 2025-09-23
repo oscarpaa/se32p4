@@ -17,8 +17,8 @@ typedef struct
 #define UART_ERROR 1
 
 uint8_t uart_rx_char();
-uint8_t uart_tx_char(uint8_t c);
-uint8_t uart_receive(uint8_t *buffer, uint16_t size);
-uint8_t uart_transmit(const uint8_t *buffer, uint16_t size);
+uint8_t uart_tx_char(char c);
+uint8_t uart_receive(char *buffer, uint16_t size);
+uint8_t uart_transmit(const char *buffer, uint16_t size);
 
 #endif

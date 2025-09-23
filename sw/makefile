@@ -1,5 +1,5 @@
-CROSS = riscv64-unknown-elf
-CCPATH = /usr/bin
+CROSS = riscv32-unknown-elf
+CCPATH = /opt/riscv/bin
 ARCH = rv32i
 ABI = ilp32
 
@@ -11,10 +11,10 @@ LD = $(CC)
 OC = $(CCPATH)/$(CROSS)-objcopy
 OD = $(CCPATH)/$(CROSS)-objdump
 
-PROJ = app_$(APP)
+PROJ = app
 LIBS_PATH = ./libs
 
-CFLAGS = -Os -Wall -march=$(ARCH) -mabi=$(ABI) --specs=nano.specs -I$(LIBS_PATH)/inc
+CFLAGS  = -Os -Wall -march=$(ARCH) -mabi=$(ABI) --specs=nano.specs -I$(LIBS_PATH)/inc
 ASFLAGS = -march=$(ARCH)
 LDFLAGS = -T link.ld --specs=nano.specs
 
@@ -44,7 +44,7 @@ $(PROJ).o: $(OBJS) link.ld
 
 $(PROJ).mem: $(PROJ).o
 	$(OC) $(OCFLAGS) $< $(PROJ).bin
-# 	hexdump -ve '1/4 "%08x\n"' $(PROJ).bin > $@ # TODO: change for 2 bytes size memory
+	hexdump -ve '1/2 "%04x\n"' $(PROJ).bin > $@
 	wc -l $@
 	@echo mem ok.
 

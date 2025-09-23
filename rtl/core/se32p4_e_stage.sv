@@ -198,7 +198,7 @@ module se32p4_e_stage
         .rstn_i,
         .csr_write_en_i(csr_write_en_e & load_en_i),
         .csr_oper_i(csr_oper_e),
-        .csr_addr_i(immediate_e),
+        .csr_addr_i(immediate_e[11:0]),
         .csr_read_dat_i(csr_read_dat_e),
         .csr_write_dat_o(csr_write_dat_e_o)
     );
