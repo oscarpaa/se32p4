@@ -2,7 +2,7 @@
 module core #(
     parameter bit SIMULATION = 0,
     parameter logic [31:0] BOOT_ADDRESS = 32'b0,
-    parameter int MEM_BYTES_LEN = 16 * 1024, // 32 KB
+    parameter int MEM_BYTES_LEN = 16 * 1024, // 16 KB
 
     parameter int BOARD_CLK_FREQ = 100_000_000,
     parameter int BOARD_CLK_MUL  = 10,
