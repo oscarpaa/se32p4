@@ -17,30 +17,30 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/reent.h>
 #include "sys/stat.h"
-#include "sys/types.h"
 #include "unistd.h"
 #include "stdint.h"
+#include "string.h"
 #include "syscalls.h"
 
-extern char __heap_start[];
-extern char __heap_end[];
-static char *brk = __heap_start;
+void *_sbrk(int incr) {
+    extern char _heap;         // Defined by the linker - start of heap
+    extern char _stack_bottom; // Defined in our linker script - bottom of stack area
 
-void *_sbrk(ptrdiff_t incr)
-{
-    char *old_brk = brk;
+    static char *heap_end = &_heap;
+    char *prev_heap_end = heap_end;
 
-    if (&__heap_start[0] == &__heap_end[0]) {
-        return NULL; 
+    // Calculate safe stack limit - stack grows down from _stack_top towards _stack_bottom
+    char *stack_limit = &_stack_bottom;
+
+    // Check if heap would grow too close to stack
+    if (heap_end + incr > stack_limit) {
+        return (void*) -1; // Return error
     }
 
-    if (brk + incr < __heap_end && brk + incr >= __heap_start) {
-        brk += incr;
-    } else {
-        return (void *)-1; 
-    }
-    return old_brk;
+    heap_end += incr;
+    return (void*) prev_heap_end;
 }
 
 int _close(int file) {

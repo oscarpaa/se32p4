@@ -1,7 +1,7 @@
 #include "uart.h"
 #include "stddef.h"
 
-uint8_t uart_rx_char()
+char uart_rx_char()
 {
     while ((UART0->state & 2) == 0); // uart empty, wait...
     return UART0->fifo;

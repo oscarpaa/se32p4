@@ -6,8 +6,8 @@ module memory #(
     input logic clk_i,
     input logic rstn_i,
     input logic [3:0] byte_en_i,
-    input logic [31:0] read_addr1_i,
-    input logic [31:0] write_addr2_i,
+    input logic [31:0] instr_addr1_i,
+    input logic [31:0] data_addr2_i,
     input logic read_addr1_en_i, read_addr2_en_i, write_en_i,
     input logic [31:0] write_dat_i,
     output logic [31:0] read_dat1_o,
@@ -15,7 +15,8 @@ module memory #(
 );
     localparam int ADDR_WIDTH = $clog2(MEM_BYTES_LEN);
     localparam int MEM_HALF_WORDS_LEN = MEM_BYTES_LEN/2;
-    logic [ADDR_WIDTH-2:0] addr1, addr2;
+    logic [ADDR_WIDTH-2:0] addr1;
+    logic [ADDR_WIDTH-2:0] addr2;
     
     logic [15:0] SYS_MEMORY[0:MEM_HALF_WORDS_LEN-1];
     logic mem_rstn;
@@ -35,8 +36,8 @@ module memory #(
         end
     endgenerate
     
-    assign addr1 = read_addr1_i[ADDR_WIDTH-1:1];
-    assign addr2 = write_addr2_i[ADDR_WIDTH-1:1];
+    assign addr1 = instr_addr1_i[ADDR_WIDTH-1:1];
+    assign addr2 = {data_addr2_i[ADDR_WIDTH-1:2], 1'b0};
     
     always_ff @(posedge clk_i, negedge mem_rstn) begin : write_to_sys_mem
         if (mem_rstn == 1'b0)

@@ -3,7 +3,7 @@
 
 _start:
     /* Initialize stack pointer */
-    la sp, _stack
+    la sp, _stack_top
 
     /* Initialize global pointer */
     .option push
@@ -12,13 +12,13 @@ _start:
     .option pop
 
     /* Clear .bss segment */
-    # la a0, __bss_start
-    # la a1, __bss_end
-    # sub a1, a1, a0       /* length = __bss_end - __bss_start */
-    # li a2, 0
-    # call memset
+    la a0, __bss_start
+    la a1, __bss_end
+    sub a1, a1, a0       /* length = __bss_end - __bss_start */
+    li a2, 0
+    call memset
 
-    /* Call user initialization if any */
+    /* Comment for simulation */
     # call banner
 
     /* Call main function */

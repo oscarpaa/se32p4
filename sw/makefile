@@ -1,9 +1,9 @@
 CROSS = riscv32-unknown-elf
 CCPATH = /opt/riscv/bin
-ARCH = rv32i
+ARCH = rv32ic
 ABI = ilp32
 
-APP = hello
+APP = sort
 
 CC = $(CCPATH)/$(CROSS)-gcc
 AS = $(CCPATH)/$(CROSS)-as
@@ -14,9 +14,9 @@ OD = $(CCPATH)/$(CROSS)-objdump
 PROJ = app
 LIBS_PATH = ./libs
 
-CFLAGS  = -Os -Wall -march=$(ARCH) -mabi=$(ABI) --specs=nano.specs -I$(LIBS_PATH)/inc
+CFLAGS  = -Os -Wall -march=$(ARCH) -mabi=$(ABI) -I$(LIBS_PATH)/inc --specs=nano.specs
 ASFLAGS = -march=$(ARCH)
-LDFLAGS = -T link.ld --specs=nano.specs
+LDFLAGS = -T link.ld -march=$(ARCH) -mabi=$(ABI) -nostartfiles -nostdlib -lc_nano -lgcc -Wl,--no-warn-rwx-segments,-m,elf32lriscv,-Map=$(PROJ).map
 
 OCFLAGS = -O binary
 ODFLAGS = -d
@@ -37,9 +37,7 @@ all: $(PROJ).mem
 	$(AS) $(ASFLAGS) -c $< -o $@
 
 $(PROJ).o: $(OBJS) link.ld
-	$(LD) $(OBJS) -march=$(ARCH) -mabi=$(ABI) $(LDFLAGS) \
-		-Wl,-m,elf32lriscv -Wl,-Map=$(PROJ).map -nostartfiles \
-		-nostdlib -lc_nano -lgcc -o $@
+	$(LD) $(OBJS) $(LDFLAGS) -o $@
 	$(OD) $(ODFLAGS) $@ > $(PROJ).lst
 
 $(PROJ).mem: $(PROJ).o

@@ -1,11 +1,11 @@
-#include "stdio.h"
+#include "sestdio.h"
 
 /**
  * https://patorjk.com/software/taag/
  * Big Money-ne
  */
 void banner() {
-    printf(
+    seprintf(
 "                      /$$$$$$   /$$$$$$            /$$   /$$\n"
 "                     /$$__  $$ /$$__  $$          | $$  | $$\n"
 "  /$$$$$$$  /$$$$$$ |__/  \\ $$|__/  \\ $$  /$$$$$$ | $$  | $$\n"
@@ -18,5 +18,5 @@ void banner() {
 "                                        | $$                \n"
 "                                        |__/                \n");
 
-	printf("\nWelcome to RISCV!\n");
+	seprintf("\nWelcome to RISCV!\n");
 }

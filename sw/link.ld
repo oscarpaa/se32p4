@@ -1,12 +1,11 @@
 MEMORY
 {
-    RAM(rwxai) : ORIGIN = 0x0, LENGTH = 0x4000 /* 32 KB */
+    RAM(rwx) : ORIGIN = 0x0, LENGTH = 0x4000 /* 16 KB */
 }
 
 SECTIONS
 {
     __stack_size = 0x800; /* 2 KB */
-    __heap_size  = 0x400; /* 1 KB */
 
     /* Code and read-only data section */
     .text : ALIGN_WITH_INPUT
@@ -44,22 +43,14 @@ SECTIONS
         __bss_end = .;          /* End of bss */
     } > RAM
 
-    /* Heap section (dynamic memory) */
-    .heap (NOLOAD) : ALIGN(4)
-    {
-        __heap_start = .;
-        . += __heap_size;   /* Reserve heap space */
-        __heap_end = .;
-    } > RAM
+    /* End marker for heap start */
+    . = ALIGN(8);
+    _heap = .; /* Heap starts here and grows upwards */
 
-    /* Stack section */
-    .stack (NOLOAD) : ALIGN(4)
-    {
-        __stack_start = .;
-        . += __stack_size;
-        __stack_end = .;
-    } > RAM
+    /* Stack grows downward from the end of RAM */
+    _stack_top = ORIGIN(RAM) + LENGTH(RAM);
+    _stack_bottom = _stack_top - __stack_size;
 
-    /* Symbol for top of stack to initialize SP */
-    _stack = __stack_end;
+    ASSERT(_stack_bottom < LENGTH(RAM), "Error: Stack size too large for RAM")
+    ASSERT(_heap <= _stack_bottom, "Error: Heap collides with stack")
 }

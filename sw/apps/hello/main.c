@@ -1,10 +1,6 @@
-// #include "stdio.h"
-#include "uart.h"
+#include "sestdio.h"
 
 int main() {
-    // printf("Hola mundo !!!\n");
-
-    char buf[25] = "Hola mundo !!!\n";
-    uart_transmit(buf, 25);
+    seprintf("Hola mundo!!\n");
     return 0;
 }
