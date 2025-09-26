@@ -20,8 +20,16 @@ This is a personal project aimed at learning more about computer architectures a
 - **utils/**  
   Utility scripts
 
+## Project Status  
+
+- ✅ RV32IC 4 stage processor.
+- ✅ Basic UART.
+- ✅ Software toolchain with startup code, linker script, and basic libraries.  
+- 🟨 Simulation testbench.
+
 ## Roadmap  
 
-- Adopt a verification methodology such as UVM.  
-- Integrate an AXI-Lite bus.  
-- Extend with further improvements and features.  
+- Adopt a verification methodology such as UVM.
+- Simple branch dinamyc prediction. 
+- Integrate an AXI-Lite bus.
+- ...
